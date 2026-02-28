@@ -21,6 +21,17 @@ const BASE_DIR = process.env.ALTEZZA_EVENTOS_DIR || path.join(DATA_ROOT, 'images
 // Public base (same-origin behind nginx).
 const BASE_URL_IMAGENES = (process.env.PUBLIC_BASE_URL || '').replace(/\/$/, '') || '';
 
+// Public path for event images (served by express in local dev, and by nginx alias in VPS)
+const EVENTOS_PUBLIC_PATH = (process.env.ALTEZZA_EVENTOS_PUBLIC_PATH || '/scrAppaltezza/images/eventos').replace(/\/$/, '');
+
+function publicEventoUrl(rutaRelativa) {
+  const rel = String(rutaRelativa || '');
+  if (!rel) return rel;
+  const base = (BASE_URL_IMAGENES || '').replace(/\/$/, '');
+  const tail = rel.startsWith('/') ? rel : `/${rel}`;
+  return `${base}${EVENTOS_PUBLIC_PATH}${tail}`;
+}
+
 
 // Función para generar código aleatorio
 function generarCodigo(len = 8) {
@@ -145,7 +156,7 @@ router.post('/uploadImagenEvento', upload.single('imagen'), async (req, res) => 
     await general.actualizarImagenEvento(codigoEvento, rutaRelativa);
 
     // Devolver URL pública
-    const rutaPublica = (BASE_URL_IMAGENES || '') + '/scrAppaltezza/images/eventos' + rutaRelativa;
+    const rutaPublica = publicEventoUrl(rutaRelativa);
     return res.status(200).json({ url: rutaPublica });
 
   } catch (err) {
@@ -234,7 +245,7 @@ router.get('/eventos/activos', async (req, res) => {
 
     eventos.forEach(e => {
       if (e.imagenPrincipal) {
-        e.imagenPrincipal = `${BASE_URL_IMAGENES}/${e.imagenPrincipal}`;
+        e.imagenPrincipal = publicEventoUrl(e.imagenPrincipal);
       }
     });
 
@@ -251,7 +262,7 @@ router.get('/eventos/inactivos', async (req, res) => {
 
     eventos.forEach(e => {
       if (e.imagenPrincipal) {
-        e.imagenPrincipal = `${BASE_URL_IMAGENES}/${e.imagenPrincipal}`;
+        e.imagenPrincipal = publicEventoUrl(e.imagenPrincipal);
       }
     });
 
@@ -317,7 +328,7 @@ router.get('/resumenEvento/:idEvento', async (req, res) => {
     let evento = results[0];
 
     if (evento.imagenPrincipal) {
-      evento.imagenPrincipal = `${BASE_URL_IMAGENES}/${evento.imagenPrincipal}`;
+      evento.imagenPrincipal = publicEventoUrl(evento.imagenPrincipal);
     }
 
     res.json(evento);
@@ -333,7 +344,7 @@ router.get('/eventos/detalle_completo/:idEvento', async (req, res) => {
     let evento = results[0];
 
     if (evento.imagenPrincipal) {
-      evento.imagenPrincipal = `${BASE_URL_IMAGENES}/${evento.imagenPrincipal}`;
+      evento.imagenPrincipal = publicEventoUrl(evento.imagenPrincipal);
     }
 
     res.json(evento);
