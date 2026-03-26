@@ -172,8 +172,7 @@ router.post('/usuario/loginUsuario', async (req, res) => {
   try {
     const { correo, pass } = req.body;
     const user = await usuario.loginUsuario(correo, pass);
-    console.log(user);
-     return res.status(200).json({
+    return res.status(200).json({
       success: true,
       userId: user.id,
       usuario: user, 
@@ -181,13 +180,208 @@ router.post('/usuario/loginUsuario', async (req, res) => {
   } catch (err) {
     switch (err) {
       case 404:
-        return res.status(200).json({ error: 404, message: 'Verificar credenciales ingresadas.' });
+        return res.status(404).json({ error: 404, message: 'Verificar credenciales ingresadas.' });
       case 401:
-        return res.status(200).json({ error: 401, message: 'Contraseña incorrecta' });
+        return res.status(401).json({ error: 401, message: 'Contraseña incorrecta' });
       case 406:
-        return res.status(200).json({ error: 406, message: 'Usuario sin contraseña asignada' });
+        return res.status(406).json({ error: 406, message: 'Usuario sin contraseña asignada' });
       case 409:
-        return res.status(200).json({ error: 409, message: 'Ingreso con contraseña temporal' });
+        return res.status(409).json({ error: 409, message: 'Ingreso con contraseña temporal' });
+      default:
+        console.error(err);
+        return res.sendStatus(500);
+    }
+  }
+});
+
+router.get('/usuariosSistema', async (req, res) => {
+  try {
+    const users = await usuario.listarUsuarios();
+    return res.status(200).json(users);
+  } catch (err) {
+    console.error(err);
+    return res.sendStatus(500);
+  }
+});
+
+router.get('/rolesSistema', async (req, res) => {
+  try {
+    const roles = await usuario.listarRoles();
+    return res.status(200).json(roles);
+  } catch (err) {
+    console.error(err);
+    return res.sendStatus(500);
+  }
+});
+
+router.post('/usuariosSistema', async (req, res) => {
+  try {
+    const { nombres, apellidos, user, rol, telefon } = req.body;
+
+    if (!nombres || !apellidos || !user || !rol || !telefon) {
+      return res.status(400).json({ error: 400, message: 'Faltan datos requeridos del usuario.' });
+    }
+
+    const created = await usuario.crearUsuario({
+      nombres: String(nombres).trim(),
+      apellidos: String(apellidos).trim(),
+      user: String(user).trim(),
+      rol: Number(rol),
+      telefon: String(telefon).trim(),
+    });
+
+    return res.status(201).json({
+      success: true,
+      usuario: created.usuario,
+      tempPassword: created.tempPassword,
+    });
+  } catch (err) {
+    if (err === 409) {
+      return res.status(409).json({ error: 409, message: 'Ya existe un usuario con ese identificador.' });
+    }
+    console.error(err);
+    return res.sendStatus(500);
+  }
+});
+
+router.put('/usuariosSistema/:idUsuario', async (req, res) => {
+  try {
+    const { idUsuario } = req.params;
+    const { nombres, apellidos, user, rol, telefon, estado } = req.body;
+
+    if (!idUsuario || !nombres || !apellidos || !user || !rol || !telefon) {
+      return res.status(400).json({ error: 400, message: 'Faltan datos requeridos del usuario.' });
+    }
+
+    const updated = await usuario.actualizarUsuario({
+      idUsuario: Number(idUsuario),
+      nombres: String(nombres).trim(),
+      apellidos: String(apellidos).trim(),
+      user: String(user).trim(),
+      rol: Number(rol),
+      telefon: String(telefon).trim(),
+      estado: Number(estado ?? 1) ? 1 : 0,
+    });
+
+    return res.status(200).json({
+      success: true,
+      usuario: updated,
+    });
+  } catch (err) {
+    if (err === 409) {
+      return res.status(409).json({ error: 409, message: 'Ya existe un usuario con ese identificador.' });
+    }
+    console.error(err);
+    return res.sendStatus(500);
+  }
+});
+
+router.post('/usuariosSistema/:idUsuario/regenerarPassTemp', async (req, res) => {
+  try {
+    const { idUsuario } = req.params;
+
+    if (!idUsuario) {
+      return res.status(400).json({ error: 400, message: 'Falta idUsuario.' });
+    }
+
+    const result = await usuario.regenerarPasswordTemporal({
+      idUsuario: Number(idUsuario),
+    });
+
+    return res.status(200).json(result);
+  } catch (err) {
+    if (err === 404) {
+      return res.status(404).json({ error: 404, message: 'El usuario no existe.' });
+    }
+    console.error(err);
+    return res.sendStatus(500);
+  }
+});
+
+router.post('/usuariosSistema/asignarEvento', async (req, res) => {
+  try {
+    const { idUsuario, idEvento } = req.body;
+
+    if (!idUsuario || !idEvento) {
+      return res.status(400).json({ error: 400, message: 'Faltan idUsuario o idEvento.' });
+    }
+
+    const result = await usuario.asignarUsuarioAEvento({
+      idUsuario: Number(idUsuario),
+      idEvento: String(idEvento).trim(),
+    });
+
+    const refreshedUser = await usuario.obtenerUsuarioPorId(Number(idUsuario));
+
+    return res.status(200).json({
+      success: true,
+      alreadyAssigned: Boolean(result?.alreadyAssigned),
+      usuario: refreshedUser,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.sendStatus(500);
+  }
+});
+
+router.post('/usuariosSistema/quitarEvento', async (req, res) => {
+  try {
+    const { idUsuario, idEvento } = req.body;
+
+    if (!idUsuario || !idEvento) {
+      return res.status(400).json({ error: 400, message: 'Faltan idUsuario o idEvento.' });
+    }
+
+    await usuario.quitarUsuarioDeEvento({
+      idUsuario: Number(idUsuario),
+      idEvento: String(idEvento).trim(),
+    });
+
+    const refreshedUser = await usuario.obtenerUsuarioPorId(Number(idUsuario));
+
+    return res.status(200).json({
+      success: true,
+      usuario: refreshedUser,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.sendStatus(500);
+  }
+});
+
+router.post('/usuario/cambiarPasswordTemporal', async (req, res) => {
+  try {
+    const { user, passActual, passNueva } = req.body;
+
+    if (!user || !passActual || !passNueva) {
+      return res.status(400).json({ error: 400, message: 'Faltan datos requeridos.' });
+    }
+
+    if (String(passNueva).length < 8) {
+      return res.status(400).json({ error: 400, message: 'La nueva contraseña debe tener al menos 8 caracteres.' });
+    }
+
+    await usuario.cambiarPasswordTemporal({
+      user: String(user).trim(),
+      passActual: String(passActual),
+      passNueva: String(passNueva),
+    });
+
+    const loggedUser = await usuario.loginUsuario(String(user).trim(), String(passNueva));
+
+    return res.status(200).json({
+      success: true,
+      userId: loggedUser.id,
+      usuario: loggedUser,
+    });
+  } catch (err) {
+    switch (err) {
+      case 401:
+        return res.status(401).json({ error: 401, message: 'La contraseña temporal es incorrecta.' });
+      case 404:
+        return res.status(404).json({ error: 404, message: 'El usuario no existe.' });
+      case 409:
+        return res.status(409).json({ error: 409, message: 'El usuario no tiene un cambio de contraseña temporal pendiente.' });
       default:
         console.error(err);
         return res.sendStatus(500);
@@ -489,18 +683,5 @@ router.post('/addInvitacion', async (req, res, next) => {
     }
 
 });
-
-router.post('/agregarUsuario', async (req, res, next) => {
-
-    try{
-        let results = await general.usuariosSistema();
-        res.json(results);
-    }catch(e){
-        console.log(e);
-        res.sendStatus(500);
-    }
-
-});
-
 
 module.exports = router;
