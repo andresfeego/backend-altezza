@@ -1,6 +1,36 @@
 const pool = require('./connection.js');
 
 let csmDB = {};
+const CLIENT_MODULE_CATALOG = [
+  { key: 'feed', label: 'Feed del evento', required: true },
+  { key: 'datos_evento', label: 'Datos del evento', required: true },
+  { key: 'calculador_trago', label: 'Calculador de trago', required: false },
+  { key: 'fotos_compartidas', label: 'Fotos compartidas', required: false },
+  { key: 'inspiracion', label: 'Inspiración', required: false },
+  { key: 'invitados', label: 'Invitados', required: false },
+  { key: 'invitaciones', label: 'Invitaciones', required: false },
+  { key: 'acomodacion', label: 'Acomodación', required: false },
+  { key: 'paletas_colores', label: 'Paletas de colores', required: false },
+  { key: 'pastel', label: 'Pastel', required: false },
+  { key: 'pendientes', label: 'Pendientes', required: false },
+  { key: 'timming', label: 'Timming', required: false },
+  { key: 'tips_boda', label: 'Tips de boda', required: false },
+  { key: 'wedding_day', label: 'Wedding day', required: false },
+];
+
+function buildClientModulesResponse(rows = []) {
+  const enabledByKey = rows.reduce((acc, row) => {
+    acc[row.moduloKey] = Boolean(row.estado);
+    return acc;
+  }, {});
+
+  return CLIENT_MODULE_CATALOG.map((moduleDef) => ({
+    key: moduleDef.key,
+    label: moduleDef.label,
+    required: moduleDef.required,
+    enabled: moduleDef.required ? true : Boolean(enabledByKey[moduleDef.key]),
+  }));
+}
 
 generaCodigo = (length) => {
     var result = '';
@@ -251,6 +281,87 @@ csmDB.actualizarImagenEvento = (idEvento, rutaRelativa) => {
         resolve(results);
       }
     );
+  });
+};
+
+csmDB.obtenerModulosClientePorEvento = (idEvento) => {
+  return new Promise((resolve, reject) => {
+    pool.query(
+      `
+      SELECT moduloKey, estado
+      FROM evento_modulo_cliente
+      WHERE idEvento = ?
+      `,
+      [idEvento],
+      (err, results) => {
+        if (err) return reject(err);
+        return resolve(buildClientModulesResponse(results || []));
+      }
+    );
+  });
+};
+
+csmDB.actualizarModulosClientePorEvento = (idEvento, modules = []) => {
+  return new Promise((resolve, reject) => {
+    const optionalModules = CLIENT_MODULE_CATALOG.filter((moduleDef) => !moduleDef.required);
+    const allowedKeys = new Set(optionalModules.map((moduleDef) => moduleDef.key));
+    const normalized = modules
+      .filter((moduleItem) => allowedKeys.has(moduleItem?.key))
+      .map((moduleItem) => [idEvento, moduleItem.key, moduleItem.enabled ? 1 : 0]);
+
+    pool.getConnection((connectionErr, connection) => {
+      if (connectionErr) return reject(connectionErr);
+
+      connection.beginTransaction((txErr) => {
+        if (txErr) {
+          connection.release();
+          return reject(txErr);
+        }
+
+        connection.query(
+          'DELETE FROM evento_modulo_cliente WHERE idEvento = ?',
+          [idEvento],
+          (deleteErr) => {
+            if (deleteErr) {
+              return connection.rollback(() => {
+                connection.release();
+                reject(deleteErr);
+              });
+            }
+
+            if (!normalized.length) {
+              return connection.commit((commitErr) => {
+                connection.release();
+                if (commitErr) return reject(commitErr);
+                return resolve(buildClientModulesResponse([]));
+              });
+            }
+
+            connection.query(
+              `
+              INSERT INTO evento_modulo_cliente (idEvento, moduloKey, estado, updatedAt)
+              VALUES ?
+              `,
+              [normalized.map(([evento, key, estado]) => [evento, key, estado, new Date()])],
+              (insertErr) => {
+                if (insertErr) {
+                  return connection.rollback(() => {
+                    connection.release();
+                    reject(insertErr);
+                  });
+                }
+
+                return connection.commit((commitErr) => {
+                  connection.release();
+                  if (commitErr) return reject(commitErr);
+                  return resolve(buildClientModulesResponse(normalized.map(([evento, moduloKey, estado]) => ({ idEvento: evento, moduloKey, estado }))));
+                });
+              }
+            );
+          }
+        );
+      });
+    });
   });
 };
 

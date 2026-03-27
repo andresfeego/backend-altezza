@@ -11,6 +11,57 @@ function generarCodigo(len = 8) {
   return code;
 }
 
+function mapEventosAsignados(results = []) {
+  return JSON.parse(JSON.stringify(results || [])).map((evento) => ({
+    id: evento.id,
+    nombre: evento.nombre,
+    imagenPrincipal: evento.imagenPrincipal,
+    estado: Number(evento.estado || 0),
+    tipoEvento: evento.tipoEvento || null,
+  }));
+}
+
+function obtenerEventosAsignadosDetalle(poolRef, idUsuario) {
+  return new Promise((resolve, reject) => {
+    poolRef.query(
+      `
+      SELECT
+        e.id,
+        e.nombre,
+        e.imagenPrincipal,
+        e.estado,
+        t.nombre AS tipoEvento
+      FROM evento_has_usuario AS ehu
+      INNER JOIN evento AS e ON e.id = ehu.idEvento
+      LEFT JOIN tipo_evento AS t ON t.id = e.idTipoEvento
+      WHERE ehu.idUsuario = ?
+      ORDER BY e.id ASC
+      `,
+      [idUsuario],
+      (err, results) => {
+        if (err) return reject(err);
+        return resolve(mapEventosAsignados(results));
+      }
+    );
+  });
+}
+
+function limpiarEventosAsignados(poolRef, idUsuario) {
+  return new Promise((resolve, reject) => {
+    poolRef.query(
+      `
+      DELETE FROM evento_has_usuario
+      WHERE idUsuario = ?
+      `,
+      [idUsuario],
+      (err, results) => {
+        if (err) return reject(err);
+        return resolve(results);
+      }
+    );
+  });
+}
+
 csmDB.loginUsuario = (correo, pass) => {
   return new Promise((resolve, reject) => {
     if (!pass) return reject(404);
@@ -25,15 +76,7 @@ csmDB.loginUsuario = (correo, pass) => {
          rs.nombre AS rolNombre,
          uss.telefon,
          uss.pass,
-         uss.passTemp,
-         CASE 
-           WHEN uss.rol = 2 THEN (
-             SELECT MIN(ehu2.idEvento)
-             FROM evento_has_usuario AS ehu2
-             WHERE ehu2.idUsuario = uss.id
-           )
-           ELSE NULL
-         END AS idEventoAsignado
+         uss.passTemp
        FROM usuarioSistema AS uss
        LEFT JOIN rolSistema AS rs 
          ON rs.id = uss.rol
@@ -49,9 +92,25 @@ csmDB.loginUsuario = (correo, pass) => {
         if (!usuario.pass) return reject(406);
         if (usuario.pass !== pass) return reject(401);
         if (usuario.passTemp && usuario.pass === usuario.passTemp) return reject(409);
-
         const { pass: _omit, passTemp: _omitTemp, ...safeUser } = usuario;
-        return resolve(safeUser);
+
+        if (safeUser.rol !== 2) {
+          return resolve({
+            ...safeUser,
+            eventosAsignados: [],
+            idEventoAsignado: null,
+          });
+        }
+
+        obtenerEventosAsignadosDetalle(pool, safeUser.id)
+          .then((eventosAsignados) => {
+            return resolve({
+              ...safeUser,
+              eventosAsignados,
+              idEventoAsignado: eventosAsignados.length === 1 ? eventosAsignados[0].id : null,
+            });
+          })
+          .catch(reject);
       }
     );
   });
@@ -193,6 +252,12 @@ csmDB.actualizarUsuario = ({ idUsuario, nombres, apellidos, user, rol, telefon, 
           [nombres, apellidos, user, rol, telefon, estado, idUsuario],
           (updateErr) => {
             if (updateErr) return reject(updateErr);
+            if (Number(rol) !== 2) {
+              return limpiarEventosAsignados(pool, idUsuario)
+                .then(() => csmDB.obtenerUsuarioPorId(idUsuario).then(resolve).catch(reject))
+                .catch(reject);
+            }
+
             return csmDB.obtenerUsuarioPorId(idUsuario).then(resolve).catch(reject);
           }
         );
@@ -229,6 +294,19 @@ csmDB.asignarUsuarioAEvento = ({ idUsuario, idEvento }) => {
   return new Promise((resolve, reject) => {
     pool.query(
       `
+      SELECT rol
+      FROM usuarioSistema
+      WHERE id = ?
+      LIMIT 1
+      `,
+      [idUsuario],
+      (userErr, userRows) => {
+        if (userErr) return reject(userErr);
+        if (!userRows?.length) return reject(404);
+        if (Number(userRows[0].rol) !== 2) return reject(409);
+
+    pool.query(
+      `
       SELECT idEvento, idUsuario
       FROM evento_has_usuario
       WHERE idEvento = ? AND idUsuario = ?
@@ -250,6 +328,8 @@ csmDB.asignarUsuarioAEvento = ({ idUsuario, idEvento }) => {
             return resolve({ success: true });
           }
         );
+      }
+    );
       }
     );
   });
@@ -301,9 +381,10 @@ csmDB.obtenerUsuarioPorId = (idUsuario) => {
         if (!results?.length) return resolve(null);
 
         const user = JSON.parse(JSON.stringify(results[0]));
+        const isCliente = Number(user.rol) === 2;
         return resolve({
           ...user,
-          eventosAsignados: user.eventosAsignados ? user.eventosAsignados.split(',') : [],
+          eventosAsignados: isCliente && user.eventosAsignados ? user.eventosAsignados.split(',') : [],
         });
       }
     );

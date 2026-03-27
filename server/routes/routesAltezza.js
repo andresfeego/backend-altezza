@@ -32,6 +32,23 @@ function publicEventoUrl(rutaRelativa) {
   return `${base}${EVENTOS_PUBLIC_PATH}${tail}`;
 }
 
+function normalizeUsuarioPayload(user) {
+  if (!user) return user;
+
+  const eventosAsignados = Array.isArray(user.eventosAsignados)
+    ? user.eventosAsignados.map((evento) => ({
+        ...evento,
+        imagenPrincipal: evento?.imagenPrincipal ? publicEventoUrl(evento.imagenPrincipal) : null,
+      }))
+    : [];
+
+  return {
+    ...user,
+    eventosAsignados,
+    idEventoAsignado: eventosAsignados.length === 1 ? eventosAsignados[0].id : null,
+  };
+}
+
 
 // Función para generar código aleatorio
 function generarCodigo(len = 8) {
@@ -171,7 +188,7 @@ router.post('/uploadImagenEvento', upload.single('imagen'), async (req, res) => 
 router.post('/usuario/loginUsuario', async (req, res) => {
   try {
     const { correo, pass } = req.body;
-    const user = await usuario.loginUsuario(correo, pass);
+    const user = normalizeUsuarioPayload(await usuario.loginUsuario(correo, pass));
     return res.status(200).json({
       success: true,
       userId: user.id,
@@ -199,6 +216,12 @@ router.get('/usuariosSistema', async (req, res) => {
     const users = await usuario.listarUsuarios();
     return res.status(200).json(users);
   } catch (err) {
+    if (err === 404) {
+      return res.status(404).json({ error: 404, message: 'El usuario no existe.' });
+    }
+    if (err === 409) {
+      return res.status(409).json({ error: 409, message: 'Solo los usuarios cliente pueden tener eventos asignados.' });
+    }
     console.error(err);
     return res.sendStatus(500);
   }
@@ -319,6 +342,12 @@ router.post('/usuariosSistema/asignarEvento', async (req, res) => {
       usuario: refreshedUser,
     });
   } catch (err) {
+    if (err === 404) {
+      return res.status(404).json({ error: 404, message: 'El usuario no existe.' });
+    }
+    if (err === 409) {
+      return res.status(409).json({ error: 409, message: 'Solo los usuarios cliente pueden tener eventos asignados.' });
+    }
     console.error(err);
     return res.sendStatus(500);
   }
@@ -367,7 +396,7 @@ router.post('/usuario/cambiarPasswordTemporal', async (req, res) => {
       passNueva: String(passNueva),
     });
 
-    const loggedUser = await usuario.loginUsuario(String(user).trim(), String(passNueva));
+    const loggedUser = normalizeUsuarioPayload(await usuario.loginUsuario(String(user).trim(), String(passNueva)));
 
     return res.status(200).json({
       success: true,
@@ -464,6 +493,58 @@ router.get('/eventos/inactivos', async (req, res) => {
   } catch (e) {
     console.error(e);
     res.sendStatus(500);
+  }
+});
+
+router.get('/eventos/:idEvento/modulos-cliente', async (req, res) => {
+  try {
+    const { idEvento } = req.params;
+
+    if (!idEvento) {
+      return res.status(400).json({ error: 400, message: 'Falta idEvento.' });
+    }
+
+    const evento = await general.eventoXid(String(idEvento).trim());
+    if (!evento?.length) {
+      return res.status(404).json({ error: 404, message: 'El evento no existe.' });
+    }
+
+    const modules = await general.obtenerModulosClientePorEvento(String(idEvento).trim());
+
+    return res.status(200).json({
+      idEvento: String(idEvento).trim(),
+      modules,
+    });
+  } catch (e) {
+    console.error(e);
+    return res.sendStatus(500);
+  }
+});
+
+router.put('/eventos/:idEvento/modulos-cliente', async (req, res) => {
+  try {
+    const { idEvento } = req.params;
+    const { modules } = req.body || {};
+
+    if (!idEvento || !Array.isArray(modules)) {
+      return res.status(400).json({ error: 400, message: 'Se requiere idEvento y un arreglo modules.' });
+    }
+
+    const evento = await general.eventoXid(String(idEvento).trim());
+    if (!evento?.length) {
+      return res.status(404).json({ error: 404, message: 'El evento no existe.' });
+    }
+
+    const updatedModules = await general.actualizarModulosClientePorEvento(String(idEvento).trim(), modules);
+
+    return res.status(200).json({
+      success: true,
+      idEvento: String(idEvento).trim(),
+      modules: updatedModules,
+    });
+  } catch (e) {
+    console.error(e);
+    return res.sendStatus(500);
   }
 });
 
