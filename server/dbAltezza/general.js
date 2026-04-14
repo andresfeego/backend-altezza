@@ -551,12 +551,12 @@ csmDB.invitadosXevento = (idEvento) => {
         subquery.grupo as Grupo_edad,
         subquery.confirmado as Estado_invitación,
         @prin := IF(subquery.principal = 1, 'Principal', '') AS Principal,
-        subquery.mensaje AS Mensaje,
+        subquery.label AS Label,
         @prev := subquery.idInvitacion as Id_inivtación_altezza
     FROM (
         SELECT 
             invita.id as idInvitacion, 
-            invita.mensaje, 
+            invita.label, 
             inv.id as idInvitado, 
             inv.nombre,
             inv.principal,
@@ -588,6 +588,178 @@ csmDB.invitadosXevento = (idEvento) => {
 
     })
 
+};
+
+csmDB.invitadosClienteXevento = (idEvento) => {
+  return new Promise((resolve, reject) => {
+    pool.query(
+      `SELECT
+        inv.id,
+        ehi.idEvento,
+        inv.nombre,
+        inv.telefono,
+        inv.wp,
+        inv.parentesco,
+        parent.parentesco AS parentescoLabel,
+        inv.grupoEdad,
+        ge.grupo AS grupoEdadLabel,
+        inv.confirmado AS estadoAsistenciaId,
+        conf.confirmado AS estadoAsistenciaLabel,
+        inv.principal AS principalInvitacion,
+        ihi.idInvitacion,
+        invita.label AS labelInvitacion,
+        invita.mensaje_personalizado AS mensajePersonalizadoInvitacion,
+        NULL AS idMesa
+      FROM evento_has_invitado AS ehi
+      JOIN invitado AS inv
+        ON inv.id = ehi.idInvitado
+      LEFT JOIN parentesco AS parent
+        ON parent.id = inv.parentesco
+      LEFT JOIN grupoEdad AS ge
+        ON ge.id = inv.grupoEdad
+      LEFT JOIN confirmado AS conf
+        ON conf.id = inv.confirmado
+      LEFT JOIN invitacion_has_invitado AS ihi
+        ON ihi.idInvitado = inv.id
+      LEFT JOIN invitacion AS invita
+        ON invita.id = ihi.idInvitacion
+      WHERE ehi.idEvento = ?
+      ORDER BY inv.id DESC`,
+      [idEvento],
+      (err, results) => {
+        if (err) {
+          return reject(err);
+        }
+
+        return resolve(results);
+      }
+    );
+  });
+};
+
+csmDB.addInvitadoEvento = (idEvento, nombre, telefono, wp, parentesco, grupoEdad) => {
+  return new Promise((resolve, reject) => {
+    pool.query(
+      `INSERT INTO invitado (nombre, principal, telefono, wp, parentesco, grupoEdad)
+       VALUES (?, 0, ?, ?, ?, ?)`,
+      [nombre, telefono || '', wp ? '1' : '0', parentesco, grupoEdad],
+      (err, results) => {
+        if (err) {
+          return reject(err);
+        }
+
+        const idInvitado = results.insertId;
+
+        pool.query(
+          `INSERT INTO evento_has_invitado (idEvento, idInvitado) VALUES (?, ?)`,
+          [idEvento, idInvitado],
+          (joinErr) => {
+            if (joinErr) {
+              return reject(joinErr);
+            }
+
+            return resolve({ id: idInvitado, idEvento });
+          }
+        );
+      }
+    );
+  });
+};
+
+csmDB.actualizarInvitadoEvento = (idEvento, idInvitado, nombre, telefono, wp, parentesco, grupoEdad, confirmado = null) => {
+  return new Promise((resolve, reject) => {
+    pool.query(
+      `SELECT 1
+       FROM evento_has_invitado
+       WHERE idEvento = ? AND idInvitado = ?
+       LIMIT 1`,
+      [idEvento, idInvitado],
+      (checkErr, checkResults) => {
+        if (checkErr) {
+          return reject(checkErr);
+        }
+
+        if (!checkResults?.length) {
+          return reject(404);
+        }
+
+        const fields = ['nombre = ?', 'telefono = ?', 'wp = ?', 'parentesco = ?', 'grupoEdad = ?'];
+        const values = [nombre, telefono || '', wp ? '1' : '0', parentesco, grupoEdad];
+
+        if (confirmado !== null && confirmado !== undefined && confirmado !== '') {
+          fields.push('confirmado = ?');
+          values.push(confirmado);
+        }
+
+        values.push(idInvitado);
+
+        pool.query(
+          `UPDATE invitado SET ${fields.join(', ')} WHERE id = ?`,
+          values,
+          (updateErr, updateResults) => {
+            if (updateErr) {
+              return reject(updateErr);
+            }
+
+            return resolve(updateResults);
+          }
+        );
+      }
+    );
+  });
+};
+
+csmDB.eliminarInvitadoEvento = (idEvento, idInvitado) => {
+  return new Promise((resolve, reject) => {
+    pool.query(
+      `SELECT 1
+       FROM evento_has_invitado
+       WHERE idEvento = ? AND idInvitado = ?
+       LIMIT 1`,
+      [idEvento, idInvitado],
+      (checkErr, checkResults) => {
+        if (checkErr) {
+          return reject(checkErr);
+        }
+
+        if (!checkResults?.length) {
+          return reject(404);
+        }
+
+        pool.query(
+          `DELETE FROM invitacion_has_invitado WHERE idInvitado = ?`,
+          [idInvitado],
+          (unlinkInvErr) => {
+            if (unlinkInvErr) {
+              return reject(unlinkInvErr);
+            }
+
+            pool.query(
+              `DELETE FROM evento_has_invitado WHERE idEvento = ? AND idInvitado = ?`,
+              [idEvento, idInvitado],
+              (unlinkEventErr) => {
+                if (unlinkEventErr) {
+                  return reject(unlinkEventErr);
+                }
+
+                pool.query(
+                  `DELETE FROM invitado WHERE id = ?`,
+                  [idInvitado],
+                  (deleteErr, deleteResults) => {
+                    if (deleteErr) {
+                      return reject(deleteErr);
+                    }
+
+                    return resolve(deleteResults);
+                  }
+                );
+              }
+            );
+          }
+        );
+      }
+    );
+  });
 };
 
 csmDB.addMesa = (idEvento, numMesa) => {
@@ -635,11 +807,11 @@ csmDB.updConfirmado = (idInvitado, confirmado) => {
 
 };
 
-csmDB.updMensajeInvitacion = (idInvitacion, mensaje) => {
+csmDB.updLabelInvitacion = (idInvitacion, label) => {
 
     return new Promise((resolve, reject) => {
 
-        pool.query(`UPDATE invitacion SET invitacion.mensaje = ? WHERE invitacion.id = ?`, [mensaje, idInvitacion], (err, results) => {
+        pool.query(`UPDATE invitacion SET invitacion.label = ? WHERE invitacion.id = ?`, [label, idInvitacion], (err, results) => {
 
             if (err) {
                 return reject(err);
@@ -650,6 +822,8 @@ csmDB.updMensajeInvitacion = (idInvitacion, mensaje) => {
     })
 
 };
+
+csmDB.updMensajeInvitacion = csmDB.updLabelInvitacion;
 
 csmDB.addInvitado = (idInvitacion, nombre, principal, telefono, wp, parentesco, grupoEdad) => {
 
@@ -690,8 +864,8 @@ csmDB.importInvitacionesExcel = (data, idEvento) => {
                     return Promise.all(
                         Object.keys(data[obj]).map(async (inv, idinv) => {
                             try {
-                                if (data[obj][inv].mensaje != '') {
-                                    csmDB.updMensajeInvitacion(idInvitacion, data[obj][inv].mensaje)
+                                if ((data[obj][inv].label || data[obj][inv].mensaje || '') != '') {
+                                    csmDB.updLabelInvitacion(idInvitacion, data[obj][inv].label || data[obj][inv].mensaje)
                                 }
                                 const results = await csmDB.addInvitado(idInvitacion, data[obj][inv].nombres, data[obj][inv].principal, data[obj][inv].celular, data[obj][inv].celular ? '1' : '0', data[obj][inv].parentesco, data[obj][inv].grupoEdad)
                                 return resolve(results);
@@ -738,6 +912,265 @@ csmDB.addInvitacion = (idEvento, idInvitacion) => {
             }
         });
 
+    })
+
+};
+
+
+csmDB.crearInvitacionEvento = (idEvento, idInvitacion, label = '', mensajePersonalizado = '') => {
+
+    return new Promise(async (resolve, reject) => {
+        try {
+            await csmDB.addInvitacion(idEvento, idInvitacion);
+            await csmDB.actualizarInvitacionEvento(idEvento, idInvitacion, label, mensajePersonalizado);
+            const invitacion = await csmDB.eventoXinvitacion(idInvitacion);
+            return resolve(invitacion);
+        } catch (error) {
+            return reject(error);
+        }
+    })
+
+};
+
+csmDB.actualizarInvitacionEvento = (idEvento, idInvitacion, label = '', mensajePersonalizado = '') => {
+
+    return new Promise((resolve, reject) => {
+
+        pool.query(`SELECT 1
+                    FROM evento_has_invitacion
+                    WHERE idEvento = ? AND idInvitacion = ?
+                    LIMIT 1`, [idEvento, idInvitacion], (checkErr, checkResults) => {
+
+            if (checkErr) {
+                return reject(checkErr);
+            }
+
+            if (!checkResults || !checkResults.length) {
+                return reject(404);
+            }
+
+            pool.query(`UPDATE invitacion
+                        SET invitacion.label = ?,
+                            invitacion.mensaje_personalizado = ?
+                        WHERE invitacion.id = ?`, [label || '', mensajePersonalizado || '', idInvitacion], (err, results) => {
+
+                if (err) {
+                    return reject(err);
+                }
+
+                return resolve(results);
+            });
+        });
+
+    })
+
+};
+
+csmDB.eliminarInvitacionEvento = (idEvento, idInvitacion) => {
+
+    return new Promise((resolve, reject) => {
+        pool.query(`SELECT 1
+                    FROM evento_has_invitacion
+                    WHERE idEvento = ? AND idInvitacion = ?
+                    LIMIT 1`, [idEvento, idInvitacion], (checkErr, checkResults) => {
+            if (checkErr) {
+                return reject(checkErr);
+            }
+
+            if (!checkResults || !checkResults.length) {
+                return reject(404);
+            }
+
+            pool.query(`UPDATE invitado AS inv
+                        JOIN invitacion_has_invitado AS ihi
+                          ON ihi.idInvitado = inv.id
+                        SET inv.principal = 0
+                        WHERE ihi.idInvitacion = ?`, [idInvitacion], (resetErr) => {
+                if (resetErr) {
+                    return reject(resetErr);
+                }
+
+                pool.query(`DELETE FROM invitacion_has_invitado WHERE idInvitacion = ?`, [idInvitacion], (unlinkErr) => {
+                    if (unlinkErr) {
+                        return reject(unlinkErr);
+                    }
+
+                    pool.query(`DELETE FROM evento_has_invitacion WHERE idEvento = ? AND idInvitacion = ?`, [idEvento, idInvitacion], (joinErr) => {
+                        if (joinErr) {
+                            return reject(joinErr);
+                        }
+
+                        pool.query(`DELETE FROM invitacion WHERE id = ?`, [idInvitacion], (deleteErr, results) => {
+                            if (deleteErr) {
+                                return reject(deleteErr);
+                            }
+
+                            return resolve(results);
+                        });
+                    });
+                });
+            });
+        });
+    })
+
+};
+
+csmDB.asignarInvitadoEventoAInvitacion = (idEvento, idInvitacion, idInvitado, principal = 0) => {
+
+    return new Promise((resolve, reject) => {
+
+        pool.query(`SELECT 1
+                    FROM evento_has_invitado
+                    WHERE idEvento = ? AND idInvitado = ?
+                    LIMIT 1`, [idEvento, idInvitado], (guestErr, guestResults) => {
+
+            if (guestErr) {
+                return reject(guestErr);
+            }
+
+            if (!guestResults || !guestResults.length) {
+                return reject(404);
+            }
+
+            pool.query(`SELECT 1
+                        FROM evento_has_invitacion
+                        WHERE idEvento = ? AND idInvitacion = ?
+                        LIMIT 1`, [idEvento, idInvitacion], (invErr, invResults) => {
+
+                if (invErr) {
+                    return reject(invErr);
+                }
+
+                if (!invResults || !invResults.length) {
+                    return reject(404);
+                }
+
+                pool.query(`DELETE FROM invitacion_has_invitado
+                            WHERE idInvitado = ?`, [idInvitado], (unlinkErr) => {
+
+                    if (unlinkErr) {
+                        return reject(unlinkErr);
+                    }
+
+                    const finalizeInsert = () => {
+                        pool.query(`INSERT INTO invitacion_has_invitado (idInvitacion, idInvitado) VALUES (?, ?)`, [idInvitacion, idInvitado], (linkErr, linkResults) => {
+                            if (linkErr) {
+                                return reject(linkErr);
+                            }
+
+                            pool.query(`UPDATE invitado SET principal = ? WHERE id = ?`, [principal ? 1 : 0, idInvitado], (principalErr) => {
+                                if (principalErr) {
+                                    return reject(principalErr);
+                                }
+
+                                return resolve(linkResults);
+                            });
+                        });
+                    };
+
+                    if (principal) {
+                        pool.query(`UPDATE invitado AS inv
+                                    JOIN invitacion_has_invitado AS ihi
+                                      ON ihi.idInvitado = inv.id
+                                    SET inv.principal = 0
+                                    WHERE ihi.idInvitacion = ?`, [idInvitacion], (resetErr) => {
+                            if (resetErr) {
+                                return reject(resetErr);
+                            }
+
+                            finalizeInsert();
+                        });
+                    } else {
+                        finalizeInsert();
+                    }
+                });
+            });
+        });
+
+    })
+
+};
+
+csmDB.quitarInvitadoEventoDeInvitacion = (idEvento, idInvitacion, idInvitado) => {
+
+    return new Promise((resolve, reject) => {
+        pool.query(`SELECT 1
+                    FROM evento_has_invitado
+                    WHERE idEvento = ? AND idInvitado = ?
+                    LIMIT 1`, [idEvento, idInvitado], (guestErr, guestResults) => {
+            if (guestErr) {
+                return reject(guestErr);
+            }
+
+            if (!guestResults || !guestResults.length) {
+                return reject(404);
+            }
+
+            pool.query(`DELETE FROM invitacion_has_invitado
+                        WHERE idInvitacion = ? AND idInvitado = ?`, [idInvitacion, idInvitado], (unlinkErr, results) => {
+                if (unlinkErr) {
+                    return reject(unlinkErr);
+                }
+
+                pool.query(`UPDATE invitado SET principal = 0 WHERE id = ?`, [idInvitado], (principalErr) => {
+                    if (principalErr) {
+                        return reject(principalErr);
+                    }
+
+                    return resolve(results);
+                });
+            });
+        });
+    })
+
+};
+
+csmDB.definirPrincipalInvitacion = (idEvento, idInvitacion, idInvitado) => {
+
+    return new Promise((resolve, reject) => {
+        pool.query(`SELECT 1
+                    FROM evento_has_invitacion
+                    WHERE idEvento = ? AND idInvitacion = ?
+                    LIMIT 1`, [idEvento, idInvitacion], (invErr, invResults) => {
+            if (invErr) {
+                return reject(invErr);
+            }
+
+            if (!invResults || !invResults.length) {
+                return reject(404);
+            }
+
+            pool.query(`SELECT 1
+                        FROM invitacion_has_invitado
+                        WHERE idInvitacion = ? AND idInvitado = ?
+                        LIMIT 1`, [idInvitacion, idInvitado], (memberErr, memberResults) => {
+                if (memberErr) {
+                    return reject(memberErr);
+                }
+
+                if (!memberResults || !memberResults.length) {
+                    return reject(404);
+                }
+
+                pool.query(`UPDATE invitado AS inv
+                            JOIN invitacion_has_invitado AS ihi
+                              ON ihi.idInvitado = inv.id
+                            SET inv.principal = 0
+                            WHERE ihi.idInvitacion = ?`, [idInvitacion], (resetErr) => {
+                    if (resetErr) {
+                        return reject(resetErr);
+                    }
+
+                    pool.query(`UPDATE invitado SET principal = 1 WHERE id = ?`, [idInvitado], (updateErr, results) => {
+                        if (updateErr) {
+                            return reject(updateErr);
+                        }
+
+                        return resolve(results);
+                    });
+                });
+            });
+        });
     })
 
 };

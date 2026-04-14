@@ -32,6 +32,41 @@ function publicEventoUrl(rutaRelativa) {
   return `${base}${EVENTOS_PUBLIC_PATH}${tail}`;
 }
 
+
+const userEventStreams = new Map();
+
+function addUserEventStream(idUsuario, res) {
+  const key = String(idUsuario);
+  const current = userEventStreams.get(key) || new Set();
+  current.add(res);
+  userEventStreams.set(key, current);
+}
+
+function removeUserEventStream(idUsuario, res) {
+  const key = String(idUsuario);
+  const current = userEventStreams.get(key);
+  if (!current) return;
+  current.delete(res);
+  if (!current.size) {
+    userEventStreams.delete(key);
+  }
+}
+
+function emitUserEvent(idUsuario, payload) {
+  const key = String(idUsuario);
+  const current = userEventStreams.get(key);
+  if (!current?.size) return;
+
+  const message = `data: ${JSON.stringify(payload)}\n\n`;
+  current.forEach((stream) => {
+    try {
+      stream.write(message);
+    } catch (error) {
+      console.error('No fue posible emitir el evento SSE del usuario.', error);
+    }
+  });
+}
+
 function normalizeUsuarioPayload(user) {
   if (!user) return user;
 
@@ -211,6 +246,63 @@ router.post('/usuario/loginUsuario', async (req, res) => {
   }
 });
 
+
+router.get('/usuariosSistema/:idUsuario/sesion', async (req, res) => {
+  try {
+    const { idUsuario } = req.params;
+
+    if (!idUsuario) {
+      return res.status(400).json({ error: 400, message: 'Falta idUsuario.' });
+    }
+
+    const user = normalizeUsuarioPayload(await usuario.obtenerUsuarioSesionPorId(Number(idUsuario)));
+    if (!user) {
+      return res.status(404).json({ error: 404, message: 'El usuario no existe.' });
+    }
+
+    return res.status(200).json({
+      success: true,
+      usuario: user,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.sendStatus(500);
+  }
+});
+
+router.get('/stream/usuarios/:idUsuario', async (req, res) => {
+  const { idUsuario } = req.params;
+
+  if (!idUsuario) {
+    return res.status(400).json({ error: 400, message: 'Falta idUsuario.' });
+  }
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  if (typeof res.flushHeaders === 'function') {
+    res.flushHeaders();
+  }
+
+  addUserEventStream(idUsuario, res);
+  res.write(`data: ${JSON.stringify({ type: 'connected', idUsuario: Number(idUsuario) })}\n\n`);
+
+  const keepAlive = setInterval(() => {
+    try {
+      res.write(': keepalive\n\n');
+    } catch (error) {
+      clearInterval(keepAlive);
+    }
+  }, 25000);
+
+  req.on('close', () => {
+    clearInterval(keepAlive);
+    removeUserEventStream(idUsuario, res);
+    res.end();
+  });
+});
+
 router.get('/usuariosSistema', async (req, res) => {
   try {
     const users = await usuario.listarUsuarios();
@@ -334,7 +426,12 @@ router.post('/usuariosSistema/asignarEvento', async (req, res) => {
       idEvento: String(idEvento).trim(),
     });
 
-    const refreshedUser = await usuario.obtenerUsuarioPorId(Number(idUsuario));
+    const refreshedUser = normalizeUsuarioPayload(await usuario.obtenerUsuarioSesionPorId(Number(idUsuario)));
+    emitUserEvent(idUsuario, {
+      type: 'usuario_eventos_actualizados',
+      idUsuario: Number(idUsuario),
+      idEvento: String(idEvento).trim(),
+    });
 
     return res.status(200).json({
       success: true,
@@ -366,7 +463,12 @@ router.post('/usuariosSistema/quitarEvento', async (req, res) => {
       idEvento: String(idEvento).trim(),
     });
 
-    const refreshedUser = await usuario.obtenerUsuarioPorId(Number(idUsuario));
+    const refreshedUser = normalizeUsuarioPayload(await usuario.obtenerUsuarioSesionPorId(Number(idUsuario)));
+    emitUserEvent(idUsuario, {
+      type: 'usuario_eventos_actualizados',
+      idUsuario: Number(idUsuario),
+      idEvento: String(idEvento).trim(),
+    });
 
     return res.status(200).json({
       success: true,
@@ -667,6 +769,211 @@ router.get('/invitadosXevento/:idEvento', async (req, res, next) => {
 
 });
 
+router.get('/eventos/:idEvento/invitados', async (req, res) => {
+  try {
+    const results = await general.invitadosClienteXevento(req.params.idEvento);
+    res.json(results);
+  } catch (e) {
+    console.log(e);
+    res.sendStatus(500);
+  }
+});
+
+router.post('/eventos/:idEvento/invitados', async (req, res) => {
+  try {
+    const { nombre, telefono, whatsapp, parentescoId, grupoEdadId } = req.body;
+
+    if (!String(nombre || '').trim()) {
+      return res.status(400).json({ message: 'El nombre del invitado es obligatorio.' });
+    }
+
+    if (!parentescoId || !grupoEdadId) {
+      return res.status(400).json({ message: 'Parentesco y grupo de edad son obligatorios.' });
+    }
+
+    const result = await general.addInvitadoEvento(
+      req.params.idEvento,
+      String(nombre).trim(),
+      telefono,
+      Boolean(whatsapp),
+      parentescoId,
+      grupoEdadId
+    );
+
+    res.status(201).json(result);
+  } catch (e) {
+    console.log(e);
+    res.sendStatus(500);
+  }
+});
+
+router.put('/eventos/:idEvento/invitados/:idInvitado', async (req, res) => {
+  try {
+    const { nombre, telefono, whatsapp, parentescoId, grupoEdadId, estadoAsistenciaId } = req.body;
+
+    if (!String(nombre || '').trim()) {
+      return res.status(400).json({ message: 'El nombre del invitado es obligatorio.' });
+    }
+
+    if (!parentescoId || !grupoEdadId) {
+      return res.status(400).json({ message: 'Parentesco y grupo de edad son obligatorios.' });
+    }
+
+    const result = await general.actualizarInvitadoEvento(
+      req.params.idEvento,
+      req.params.idInvitado,
+      String(nombre).trim(),
+      telefono,
+      Boolean(whatsapp),
+      parentescoId,
+      grupoEdadId,
+      estadoAsistenciaId
+    );
+
+    res.json(result);
+  } catch (e) {
+    if (e === 404) {
+      return res.status(404).json({ message: 'El invitado no pertenece al evento.' });
+    }
+
+    console.log(e);
+    res.sendStatus(500);
+  }
+});
+
+router.delete('/eventos/:idEvento/invitados/:idInvitado', async (req, res) => {
+  try {
+    await general.eliminarInvitadoEvento(req.params.idEvento, req.params.idInvitado);
+    res.json({ ok: true });
+  } catch (e) {
+    if (e === 404) {
+      return res.status(404).json({ message: 'El invitado no pertenece al evento.' });
+    }
+
+    console.log(e);
+    res.sendStatus(500);
+  }
+});
+
+router.get('/eventos/:idEvento/invitaciones', async (req, res) => {
+
+    try {
+        const invitaciones = await general.invitacionesXevento(req.params.idEvento);
+        const detalle = await Promise.all((invitaciones || []).map((item) => general.eventoXinvitacion(item.id)));
+        res.json(detalle);
+    } catch (e) {
+        console.log(e);
+        res.sendStatus(500);
+    }
+
+});
+
+router.post('/eventos/:idEvento/invitaciones', async (req, res) => {
+
+    try {
+        const label = String(req.body.label || '').trim();
+        const mensajePersonalizado = String(req.body.mensajePersonalizado || '').trim();
+        const invitacion = await general.crearInvitacionEvento(req.params.idEvento, generaCodigo(10), label, mensajePersonalizado);
+        res.status(201).json(invitacion);
+    } catch (e) {
+        console.log(e);
+        res.sendStatus(500);
+    }
+
+});
+
+router.put('/eventos/:idEvento/invitaciones/:idInvitacion', async (req, res) => {
+
+    try {
+        const label = String(req.body.label || '').trim();
+        const mensajePersonalizado = String(req.body.mensajePersonalizado || '').trim();
+        await general.actualizarInvitacionEvento(req.params.idEvento, req.params.idInvitacion, label, mensajePersonalizado);
+        const invitacion = await general.eventoXinvitacion(req.params.idInvitacion);
+        res.json(invitacion);
+    } catch (e) {
+        if (e === 404) {
+            return res.status(404).json({ message: 'La invitacion no pertenece al evento.' });
+        }
+
+        console.log(e);
+        res.sendStatus(500);
+    }
+
+});
+
+router.post('/eventos/:idEvento/invitaciones/:idInvitacion/invitados', async (req, res) => {
+
+    try {
+        const { idInvitado, principal } = req.body;
+
+        if (!idInvitado) {
+            return res.status(400).json({ message: 'Falta idInvitado.' });
+        }
+
+        await general.asignarInvitadoEventoAInvitacion(req.params.idEvento, req.params.idInvitacion, idInvitado, Boolean(principal));
+        const invitacion = await general.eventoXinvitacion(req.params.idInvitacion);
+        res.json(invitacion);
+    } catch (e) {
+        if (e === 404) {
+            return res.status(404).json({ message: 'El invitado o la invitacion no pertenecen al evento.' });
+        }
+
+        console.log(e);
+        res.sendStatus(500);
+    }
+
+});
+
+router.delete('/eventos/:idEvento/invitaciones/:idInvitacion/invitados/:idInvitado', async (req, res) => {
+
+    try {
+        await general.quitarInvitadoEventoDeInvitacion(req.params.idEvento, req.params.idInvitacion, req.params.idInvitado);
+        const invitacion = await general.eventoXinvitacion(req.params.idInvitacion);
+        res.json(invitacion);
+    } catch (e) {
+        if (e === 404) {
+            return res.status(404).json({ message: 'El invitado no pertenece al evento.' });
+        }
+
+        console.log(e);
+        res.sendStatus(500);
+    }
+
+});
+
+router.put('/eventos/:idEvento/invitaciones/:idInvitacion/principal/:idInvitado', async (req, res) => {
+
+    try {
+        await general.definirPrincipalInvitacion(req.params.idEvento, req.params.idInvitacion, req.params.idInvitado);
+        const invitacion = await general.eventoXinvitacion(req.params.idInvitacion);
+        res.json(invitacion);
+    } catch (e) {
+        if (e === 404) {
+            return res.status(404).json({ message: 'El invitado no hace parte de la invitacion.' });
+        }
+
+        console.log(e);
+        res.sendStatus(500);
+    }
+
+});
+
+router.delete('/eventos/:idEvento/invitaciones/:idInvitacion', async (req, res) => {
+
+    try {
+        await general.eliminarInvitacionEvento(req.params.idEvento, req.params.idInvitacion);
+        res.json({ ok: true });
+    } catch (e) {
+        if (e === 404) {
+            return res.status(404).json({ message: 'La invitacion no pertenece al evento.' });
+        }
+
+        console.log(e);
+        res.sendStatus(500);
+    }
+
+});
+
 router.post('/addMesa', async (req, res, next) => {
 
     try{
@@ -716,10 +1023,24 @@ router.post('/updConfirmado', async (req, res, next) => {
 
 });
 
+router.post('/updLabelInvitacion', async (req, res, next) => {
+
+    try{
+        const label = req.body.label ?? req.body.mensaje;
+        let results = await general.updLabelInvitacion(req.body.idInvitacion, label);
+        res.json(results);
+    }catch(e){
+        console.log(e);
+        res.sendStatus(500);
+    }
+
+});
+
 router.post('/updMensajeInvitacion', async (req, res, next) => {
 
     try{
-        let results = await general.updMensajeInvitacion(req.body.idInvitacion, req.body.mensaje);
+        const label = req.body.label ?? req.body.mensaje;
+        let results = await general.updLabelInvitacion(req.body.idInvitacion, label);
         res.json(results);
     }catch(e){
         console.log(e);
