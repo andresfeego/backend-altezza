@@ -1,0 +1,105 @@
+[
+  {
+    "type": "music_player",
+    "enabled": true,
+    "order": 1,
+    "config": {
+      "title": "Nuestra cancion",
+      "trackLabel": "Matteo Bocelli ft. Leonel Garcia - Que eres tu",
+      "audioSrc": "/scrAppaltezza/invitations/bodnatyand/audio/background_track.mp3",
+      "autoplay": true,
+      "initiallyMuted": false
+    }
+  },
+  {
+    "type": "simple_image",
+    "enabled": true,
+    "order": 2,
+    "config": {
+      "imageSrc": "/scrAppaltezza/invitations/bodnatyand/simple_image/image_01.jpg",
+      "alt": "Imagen editorial de la invitacion"
+    }
+  },
+  {
+    "type": "biblical_quote",
+    "enabled": true,
+    "order": 3,
+    "config": {
+      "passageText": "Y sobre todas estas cosas vestios de amor, que es el vinculo perfecto.",
+      "passageReference": "Colosenses 3:14"
+    }
+  },
+  {
+    "type": "welcome_message",
+    "enabled": true,
+    "order": 4,
+    "config": {
+      "title": "Natalia & Andres",
+      "subtitle": "Con muchisima alegria queremos invitarte a celebrar nuestro matrimonio en Villa Germana."
+    }
+  },
+  {
+    "type": "photo_slider",
+    "enabled": true,
+    "order": 5,
+    "config": {
+      "images": [
+        "/scrAppaltezza/invitations/bodnatyand/photo_slider/slide_01.jpg",
+        "/scrAppaltezza/invitations/bodnatyand/photo_slider/slide_02.jpg",
+        "/scrAppaltezza/invitations/bodnatyand/photo_slider/slide_03.jpg",
+        "/scrAppaltezza/invitations/bodnatyand/photo_slider/slide_04.jpg"
+      ]
+    }
+  },
+  {
+    "type": "countdown",
+    "enabled": true,
+    "order": 6,
+    "config": {
+      "target": "fechaHoraCeremonia",
+      "title": "Cuenta regresiva para nuestro gran dia"
+    }
+  },
+  {
+    "type": "couple_family",
+    "enabled": true,
+    "order": 7,
+    "config": {
+      "coupleLabel": "Natalia & Andres",
+      "parentsBride": [
+        "Martha Ruiz",
+        "Carlos Moreno"
+      ],
+      "parentsGroom": [
+        "Claudia Perez",
+        "Javier Torres"
+      ],
+      "godparents": [
+        "Paula y Esteban",
+        "Marcela y Juan David"
+      ]
+    }
+  },
+  {
+    "type": "event_details",
+    "enabled": true,
+    "order": 8,
+    "config": {
+      "showCeremony": true,
+      "showReception": true,
+      "showDressCode": true,
+      "showHashtag": true,
+      "showGiftInfo": true,
+      "giftLabel": "Lluvia de sobres"
+    }
+  },
+  {
+    "type": "attendance_confirm",
+    "enabled": true,
+    "order": 9,
+    "config": {
+      "title": "Confirma tu asistencia antes del 5 de junio",
+      "deadlineMode": "fechaHoraLimiteConfirmar"
+    }
+  }
+]

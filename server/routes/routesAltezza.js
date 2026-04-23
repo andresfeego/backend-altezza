@@ -35,6 +35,26 @@ function publicEventoUrl(rutaRelativa) {
 
 const userEventStreams = new Map();
 
+function parseOptionalPositiveInt(value) {
+  if (value === null || value === undefined || value === '') return null;
+
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) return NaN;
+
+  return parsed;
+}
+
+function parseOptionalBoolean(value) {
+  if (value === null || value === undefined || value === '') return null;
+  if (typeof value === 'boolean') return value;
+
+  const normalized = String(value).trim().toLowerCase();
+  if (['1', 'true', 'si', 'sí', 'yes', 'y'].includes(normalized)) return true;
+  if (['0', 'false', 'no', 'n'].includes(normalized)) return false;
+
+  return null;
+}
+
 function addUserEventStream(idUsuario, res) {
   const key = String(idUsuario);
   const current = userEventStreams.get(key) || new Set();
@@ -650,6 +670,80 @@ router.put('/eventos/:idEvento/modulos-cliente', async (req, res) => {
   }
 });
 
+router.get('/eventos/:idEvento/invitacion-publica-config', async (req, res) => {
+  try {
+    const { idEvento } = req.params;
+
+    if (!idEvento) {
+      return res.status(400).json({ error: 400, message: 'Falta idEvento.' });
+    }
+
+    const evento = await general.eventoXid(String(idEvento).trim());
+    if (!evento?.length) {
+      return res.status(404).json({ error: 404, message: 'El evento no existe.' });
+    }
+
+    const config = await general.obtenerInvitacionPublicaEvento(String(idEvento).trim());
+    return res.status(200).json(config);
+  } catch (e) {
+    console.error(e);
+    return res.sendStatus(500);
+  }
+});
+
+router.put('/eventos/:idEvento/invitacion-publica-config', async (req, res) => {
+  try {
+    const { idEvento } = req.params;
+
+    if (!idEvento) {
+      return res.status(400).json({ error: 400, message: 'Falta idEvento.' });
+    }
+
+    const config = await general.actualizarInvitacionPublicaEvento(String(idEvento).trim(), req.body || {});
+    return res.status(200).json(config);
+  } catch (e) {
+    if (e === 404) {
+      return res.status(404).json({ error: 404, message: 'El evento no existe.' });
+    }
+
+    console.error(e);
+    return res.sendStatus(500);
+  }
+});
+
+router.get('/public/invitaciones/:idInvitacion/:idInvitado', async (req, res) => {
+  try {
+    const payload = await general.obtenerInvitacionPublicaPorIds(req.params.idInvitacion, req.params.idInvitado);
+    return res.status(200).json(payload);
+  } catch (e) {
+    if (e === 404) {
+      return res.status(404).json({ error: 404, message: 'No encontramos la invitacion solicitada.' });
+    }
+
+    console.error(e);
+    return res.sendStatus(500);
+  }
+});
+
+router.put('/public/invitaciones/:idInvitacion/confirmacion', async (req, res) => {
+  try {
+    const { respuestas } = req.body || {};
+    const payload = await general.confirmarInvitacionPublica(req.params.idInvitacion, respuestas);
+    return res.status(200).json(payload);
+  } catch (e) {
+    if (e === 400) {
+      return res.status(400).json({ error: 400, message: 'Debes enviar al menos una respuesta valida.' });
+    }
+
+    if (e === 404) {
+      return res.status(404).json({ error: 404, message: 'Uno o mas invitados no pertenecen a esta invitacion.' });
+    }
+
+    console.error(e);
+    return res.sendStatus(500);
+  }
+});
+
 
 router.post('/eventoXinvitacion', async (req, res, next) => {
 
@@ -787,8 +881,15 @@ router.post('/eventos/:idEvento/invitados', async (req, res) => {
       return res.status(400).json({ message: 'El nombre del invitado es obligatorio.' });
     }
 
-    if (!parentescoId || !grupoEdadId) {
-      return res.status(400).json({ message: 'Parentesco y grupo de edad son obligatorios.' });
+    const parentescoParsed = parseOptionalPositiveInt(parentescoId);
+    const grupoEdadParsed = parseOptionalPositiveInt(grupoEdadId);
+
+    if (Number.isNaN(parentescoParsed)) {
+      return res.status(400).json({ message: 'parentescoId invalido.' });
+    }
+
+    if (Number.isNaN(grupoEdadParsed)) {
+      return res.status(400).json({ message: 'grupoEdadId invalido.' });
     }
 
     const result = await general.addInvitadoEvento(
@@ -796,8 +897,8 @@ router.post('/eventos/:idEvento/invitados', async (req, res) => {
       String(nombre).trim(),
       telefono,
       Boolean(whatsapp),
-      parentescoId,
-      grupoEdadId
+      parentescoParsed,
+      grupoEdadParsed
     );
 
     res.status(201).json(result);
@@ -815,8 +916,15 @@ router.put('/eventos/:idEvento/invitados/:idInvitado', async (req, res) => {
       return res.status(400).json({ message: 'El nombre del invitado es obligatorio.' });
     }
 
-    if (!parentescoId || !grupoEdadId) {
-      return res.status(400).json({ message: 'Parentesco y grupo de edad son obligatorios.' });
+    const parentescoParsed = parseOptionalPositiveInt(parentescoId);
+    const grupoEdadParsed = parseOptionalPositiveInt(grupoEdadId);
+
+    if (Number.isNaN(parentescoParsed)) {
+      return res.status(400).json({ message: 'parentescoId invalido.' });
+    }
+
+    if (Number.isNaN(grupoEdadParsed)) {
+      return res.status(400).json({ message: 'grupoEdadId invalido.' });
     }
 
     const result = await general.actualizarInvitadoEvento(
@@ -825,8 +933,8 @@ router.put('/eventos/:idEvento/invitados/:idInvitado', async (req, res) => {
       String(nombre).trim(),
       telefono,
       Boolean(whatsapp),
-      parentescoId,
-      grupoEdadId,
+      parentescoParsed,
+      grupoEdadParsed,
       estadoAsistenciaId
     );
 
@@ -887,7 +995,8 @@ router.put('/eventos/:idEvento/invitaciones/:idInvitacion', async (req, res) => 
     try {
         const label = String(req.body.label || '').trim();
         const mensajePersonalizado = String(req.body.mensajePersonalizado || '').trim();
-        await general.actualizarInvitacionEvento(req.params.idEvento, req.params.idInvitacion, label, mensajePersonalizado);
+        const enviada = parseOptionalBoolean(req.body.enviada);
+        await general.actualizarInvitacionEvento(req.params.idEvento, req.params.idInvitacion, label, mensajePersonalizado, enviada);
         const invitacion = await general.eventoXinvitacion(req.params.idInvitacion);
         res.json(invitacion);
     } catch (e) {
