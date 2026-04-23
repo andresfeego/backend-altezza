@@ -18,6 +18,293 @@ const CLIENT_MODULE_CATALOG = [
   { key: 'wedding_day', label: 'Wedding day', required: false },
 ];
 
+const INVITATION_TEMPLATE_DEFAULT = 'wedding-classic';
+const INVITATION_MODULE_TYPE_CATALOG = new Set([
+  'envelop_intro',
+  'hero_image_1',
+  'hero_image_2',
+  'simple_image',
+  'biblical_quote',
+  'countdown_image',
+  'parallax_image_date',
+  'dresscode',
+  'gift_envelopes',
+  'closing_message',
+  'welcome_message',
+  'photo_slider',
+  'image_slider_sepia',
+  'music_player',
+  'countdown',
+  'couple_family',
+  'save_the_date_calendar',
+  'event_details',
+  'attendance_confirm',
+]);
+const SAME_ORIGIN_PUBLIC_ASSET_PREFIXES = [
+  '/scrAppaltezza/images/eventos',
+  '/scrAppaltezza/invitations',
+];
+
+function safeParseJson(value, fallback) {
+  if (!value) return fallback;
+
+  try {
+    return typeof value === 'string' ? JSON.parse(value) : value;
+  } catch (_error) {
+    return fallback;
+  }
+}
+
+function toSameOriginPublicAssetUrl(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return raw;
+
+  if (raw.startsWith('/')) {
+    return raw;
+  }
+
+  try {
+    const parsed = new URL(raw);
+    const publicPrefix = SAME_ORIGIN_PUBLIC_ASSET_PREFIXES.find((prefix) => parsed.pathname.startsWith(prefix));
+    if (!publicPrefix) return raw;
+    return `${parsed.pathname}${parsed.search || ''}${parsed.hash || ''}`;
+  } catch (_error) {
+    return raw;
+  }
+}
+
+function normalizeInvitationAssetValue(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => normalizeInvitationAssetValue(item));
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.entries(value).reduce((acc, [key, item]) => {
+      acc[key] = normalizeInvitationAssetValue(item);
+      return acc;
+    }, {});
+  }
+
+  return typeof value === 'string' ? toSameOriginPublicAssetUrl(value) : value;
+}
+
+function buildGoogleMapsUrl(lat, lng) {
+  const latitude = Number(lat);
+  const longitude = Number(lng);
+
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    return null;
+  }
+
+  return `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+}
+
+function buildDefaultInvitationModules(evento = {}) {
+  const isTerracotaTemplate = String(evento?.templateKey || '').trim() === 'wedding_terracota';
+  const heroModuleType = isTerracotaTemplate ? 'hero_image_2' : 'hero_image_1';
+
+  return [
+    {
+      type: 'music_player',
+      enabled: true,
+      order: 1,
+      config: {
+        title: 'Nuestra cancion',
+        trackLabel: '',
+        audioSrc: null,
+        autoplay: true,
+        initiallyMuted: false,
+      },
+    },
+    {
+      type: heroModuleType,
+      enabled: true,
+      order: 2,
+      config: {
+        text1: 'Altezza invitaciones',
+        imageSrc: evento?.imagenPrincipal || null,
+        backgroundImage: evento?.imagenPrincipal || null,
+        logoImage: null,
+      },
+    },
+    {
+      type: 'simple_image',
+      enabled: true,
+      order: 3,
+      config: {
+        imageSrc: evento?.imagenPrincipal || null,
+        alt: 'Imagen de la invitacion',
+      },
+    },
+    {
+      type: 'biblical_quote',
+      enabled: true,
+      order: 4,
+      config: {
+        passageText: 'Y sobre todas estas cosas vestios de amor, que es el vinculo perfecto.',
+        passageReference: 'Colosenses 3:14',
+      },
+    },
+    {
+      type: 'countdown_image',
+      enabled: true,
+      order: 5,
+      config: {
+        title: 'Cuenta regresiva',
+        target: 'fechaHoraCeremonia',
+        backgroundImage: evento?.imagenPrincipal || null,
+      },
+    },
+    {
+      type: 'parallax_image_date',
+      enabled: true,
+      order: 6,
+      config: {
+        backgroundImage: evento?.imagenPrincipal || null,
+        target: 'fechaHoraCeremonia',
+      },
+    },
+    {
+      type: 'welcome_message',
+      enabled: true,
+      order: 7,
+      config: {
+        title: evento?.nombre || 'Nuestra invitacion',
+        subtitle: 'Queremos celebrar contigo este momento especial.',
+      },
+    },
+    {
+      type: 'photo_slider',
+      enabled: true,
+      order: 8,
+      config: {
+        images: evento?.imagenPrincipal ? [evento.imagenPrincipal] : [],
+      },
+    },
+    {
+      type: 'countdown',
+      enabled: true,
+      order: 9,
+      config: {
+        target: 'fechaHoraCeremonia',
+        title: 'Cuenta regresiva',
+      },
+    },
+    {
+      type: 'couple_family',
+      enabled: true,
+      order: 10,
+      config: {
+        coupleLabel: evento?.nombre || '',
+        parentsBride: [],
+        parentsGroom: [],
+        godparents: [],
+      },
+    },
+    ...(isTerracotaTemplate
+      ? [{
+        type: 'save_the_date_calendar',
+        enabled: true,
+        order: 11,
+        config: {
+          message: 'Tenemos el gusto de invitarlos a nuestra boda , esperamos que nos acompañen en este momento inolvidable',
+        },
+      }]
+      : []),
+    {
+      type: 'event_details',
+      enabled: true,
+      order: 12,
+      config: {
+        showCeremony: true,
+        showReception: true,
+        showDressCode: true,
+        showHashtag: true,
+        showGiftInfo: true,
+        giftLabel: 'Lluvia de sobres',
+      },
+    },
+    {
+      type: 'dresscode',
+      enabled: true,
+      order: 13,
+      config: {
+        title: 'Dress code',
+      },
+    },
+    {
+      type: 'gift_envelopes',
+      enabled: true,
+      order: 14,
+      config: {
+        imageSrc: null,
+        imageAlt: 'Lluvia de sobres',
+      },
+    },
+    {
+      type: 'closing_message',
+      enabled: true,
+      order: 15,
+      config: {
+        message: 'Gracias por acompanarnos en este momento tan especial. Nos hara muy felices compartir este dia contigo.',
+        frameImage: null,
+        frameImageAlt: 'Marco ornamental',
+      },
+    },
+    {
+      type: 'attendance_confirm',
+      enabled: true,
+      order: 16,
+      config: {
+        title: 'Confirma tu asistencia',
+        deadlineMode: 'fechaHoraLimiteConfirmar',
+      },
+    },
+  ];
+}
+
+function normalizeInvitationModules(modules, evento = {}) {
+  const fallback = buildDefaultInvitationModules(evento);
+  if (!Array.isArray(modules) || !modules.length) return fallback;
+
+  const normalized = modules
+    .filter((item) => INVITATION_MODULE_TYPE_CATALOG.has(item?.type))
+    .map((item, index) => ({
+      type: item.type,
+      enabled: item.enabled !== false,
+      order: Number.isFinite(Number(item.order)) ? Number(item.order) : index + 1,
+      config: normalizeInvitationAssetValue(item?.config && typeof item.config === 'object' ? item.config : {}),
+    }))
+    .sort((a, b) => a.order - b.order);
+
+  return normalized.length ? normalized : fallback;
+}
+
+function buildDefaultInvitationSeo(evento = {}) {
+  const eventName = String(evento?.nombre || 'Invitacion Altezza').trim();
+
+  return {
+    title: `Invitacion ${eventName}`.trim(),
+    description: `Acompananos a celebrar ${eventName}.`,
+    image: evento?.imagenPrincipal || null,
+  };
+}
+
+function normalizeInvitationPublicConfig(row = null, evento = {}) {
+  const defaultSeo = buildDefaultInvitationSeo(evento);
+  const modules = normalizeInvitationModules(safeParseJson(row?.modulesJson, null), evento);
+
+  return {
+    idEvento: evento?.id || row?.idEvento || null,
+    templateKey: String(row?.templateKey || INVITATION_TEMPLATE_DEFAULT).trim() || INVITATION_TEMPLATE_DEFAULT,
+    seoTitle: String(row?.seoTitle || defaultSeo.title).trim(),
+    seoDescription: String(row?.seoDescription || defaultSeo.description).trim(),
+    seoImage: toSameOriginPublicAssetUrl(String(row?.seoImage || defaultSeo.image || '').trim()) || null,
+    published: Boolean(row?.published),
+    modules,
+  };
+}
+
 function buildClientModulesResponse(rows = []) {
   const enabledByKey = rows.reduce((acc, row) => {
     acc[row.moduloKey] = Boolean(row.estado);
@@ -252,7 +539,11 @@ csmDB.detalleEventoCompleto = (idEvento) => {
         e.*, 
         t.nombre AS nombreTipoEvento,
         lc.nombre AS nombreLugarCeremonia,
-        lr.nombre AS nombreLugarRecepcion
+        lc.latitud AS latitudLugarCeremonia,
+        lc.longitud AS longitudLugarCeremonia,
+        lr.nombre AS nombreLugarRecepcion,
+        lr.latitud AS latitudLugarRecepcion,
+        lr.longitud AS longitudLugarRecepcion
       FROM evento e
       LEFT JOIN tipo_evento t ON e.idTipoEvento = t.id
       LEFT JOIN lugar lc ON e.idLugarCeremonia = lc.id
@@ -362,6 +653,90 @@ csmDB.actualizarModulosClientePorEvento = (idEvento, modules = []) => {
         );
       });
     });
+  });
+};
+
+csmDB.obtenerInvitacionPublicaEvento = (idEvento) => {
+  return new Promise((resolve, reject) => {
+    pool.query(
+      `
+      SELECT *
+      FROM evento_invitacion_publica
+      WHERE idEvento = ?
+      LIMIT 1
+      `,
+      [idEvento],
+      async (err, results) => {
+        if (err) return reject(err);
+
+        try {
+          const eventoRows = await csmDB.detalleEventoCompleto(idEvento);
+          const evento = eventoRows?.[0] || null;
+          return resolve(normalizeInvitationPublicConfig(results?.[0] || null, evento));
+        } catch (innerError) {
+          return reject(innerError);
+        }
+      }
+    );
+  });
+};
+
+csmDB.actualizarInvitacionPublicaEvento = (idEvento, payload = {}) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const eventoRows = await csmDB.detalleEventoCompleto(idEvento);
+      const evento = eventoRows?.[0] || null;
+      if (!evento) return reject(404);
+
+      const normalized = normalizeInvitationPublicConfig({
+        idEvento,
+        templateKey: payload?.templateKey,
+        seoTitle: payload?.seoTitle,
+        seoDescription: payload?.seoDescription,
+        seoImage: payload?.seoImage,
+        published: payload?.published,
+        modulesJson: JSON.stringify(payload?.modules || []),
+      }, evento);
+
+      pool.query(
+        `
+        INSERT INTO evento_invitacion_publica
+          (idEvento, templateKey, seoTitle, seoDescription, seoImage, published, modulesJson, updatedAt)
+        VALUES
+          (?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+          templateKey = VALUES(templateKey),
+          seoTitle = VALUES(seoTitle),
+          seoDescription = VALUES(seoDescription),
+          seoImage = VALUES(seoImage),
+          published = VALUES(published),
+          modulesJson = VALUES(modulesJson),
+          updatedAt = VALUES(updatedAt)
+        `,
+        [
+          idEvento,
+          normalized.templateKey,
+          normalized.seoTitle,
+          normalized.seoDescription,
+          normalized.seoImage,
+          normalized.published ? 1 : 0,
+          JSON.stringify(normalized.modules),
+          new Date(),
+        ],
+        async (err) => {
+          if (err) return reject(err);
+
+          try {
+            const config = await csmDB.obtenerInvitacionPublicaEvento(idEvento);
+            return resolve(config);
+          } catch (innerError) {
+            return reject(innerError);
+          }
+        }
+      );
+    } catch (error) {
+      return reject(error);
+    }
   });
 };
 
@@ -497,7 +872,7 @@ csmDB.invitacionesXevento = (idEvento) => {
 
                         WHERE ehi.idEvento = ?
 
-                        ORDER BY inv.autoinc DESC`, idEvento, (err, results) => {
+                        ORDER BY inv.autoinc ASC`, idEvento, (err, results) => {
 
             if (err) {
                 return reject(err);
@@ -568,8 +943,8 @@ csmDB.invitadosXevento = (idEvento) => {
         JOIN invitacion AS invita ON invita.id = ehi.idInvitacion
         JOIN invitacion_has_invitado AS ihi ON ihi.idInvitacion = invita.id
         JOIN invitado AS inv ON ihi.idInvitado = inv.id
-        JOIN parentesco AS parent ON inv.parentesco = parent.id
-        JOIN grupoEdad AS ge ON inv.grupoEdad = ge.id
+        LEFT JOIN parentesco AS parent ON inv.parentesco = parent.id
+        LEFT JOIN grupoEdad AS ge ON inv.grupoEdad = ge.id
         JOIN confirmado AS conf ON inv.confirmado = conf.id
         WHERE eve.id = ?
         ORDER BY invita.id ASC,
@@ -807,6 +1182,164 @@ csmDB.updConfirmado = (idInvitado, confirmado) => {
 
 };
 
+csmDB.obtenerInvitadoEnInvitacion = (idInvitacion, idInvitado) => {
+  return new Promise((resolve, reject) => {
+    pool.query(
+      `
+      SELECT inv.*
+      FROM invitado AS inv
+      JOIN invitacion_has_invitado AS ihi
+        ON ihi.idInvitado = inv.id
+      WHERE ihi.idInvitacion = ?
+        AND inv.id = ?
+      LIMIT 1
+      `,
+      [idInvitacion, idInvitado],
+      (err, results) => {
+        if (err) return reject(err);
+        return resolve(results?.[0] || null);
+      }
+    );
+  });
+};
+
+csmDB.obtenerEventoInvitacionBase = (idInvitacion) => {
+  return new Promise((resolve, reject) => {
+    pool.query(
+      `
+      SELECT
+        e.id AS idEvento,
+        e.nombre AS nombreEvento,
+        e.fechaHoraCeremonia,
+        e.fechaHoraRecepcion,
+        e.fechaHoraLimiteConfirmar,
+        e.hashtag,
+        e.imagenPrincipal,
+        e.idTipoEvento,
+        e.idLugarCeremonia,
+        e.idLugarRecepcion,
+        inv.id AS idInvitacion,
+        inv.label,
+        inv.mensaje_personalizado
+      FROM evento AS e
+      JOIN evento_has_invitacion AS ehi
+        ON ehi.idEvento = e.id
+      JOIN invitacion AS inv
+        ON inv.id = ehi.idInvitacion
+      WHERE inv.id = ?
+      LIMIT 1
+      `,
+      [idInvitacion],
+      (err, results) => {
+        if (err) return reject(err);
+        return resolve(results?.[0] || null);
+      }
+    );
+  });
+};
+
+csmDB.obtenerInvitacionPublicaPorIds = (idInvitacion, idInvitado) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const invitacion = await csmDB.obtenerEventoInvitacionBase(idInvitacion);
+      if (!invitacion?.idEvento) return reject(404);
+
+      const invitadoActual = await csmDB.obtenerInvitadoEnInvitacion(idInvitacion, idInvitado);
+      if (!invitadoActual) return reject(404);
+
+      const config = await csmDB.obtenerInvitacionPublicaEvento(invitacion.idEvento);
+      const listaInvitados = await csmDB.invitadosXinvitaciones(idInvitacion);
+      const eventoRows = await csmDB.detalleEventoCompleto(invitacion.idEvento);
+      const evento = eventoRows?.[0] || invitacion;
+      const seoImage = config.seoImage || evento?.imagenPrincipal || null;
+
+      return resolve({
+        evento: {
+          id: evento?.id || invitacion?.idEvento || null,
+          nombre: evento?.nombre || invitacion?.nombre || '',
+          tipoEvento: evento?.nombreTipoEvento || '',
+          imagenPrincipal: toSameOriginPublicAssetUrl(evento?.imagenPrincipal || null),
+          templateKey: config.templateKey,
+          seo: {
+            title: config.seoTitle,
+            description: config.seoDescription,
+            image: toSameOriginPublicAssetUrl(seoImage),
+          },
+        },
+        invitacion: {
+          id: invitacion.idInvitacion,
+          idEvento: invitacion.idEvento,
+          label: invitacion.label || '',
+          mensajePersonalizado: invitacion.mensaje_personalizado || '',
+          fechaHoraCeremonia: invitacion.fechaHoraCeremonia || null,
+          fechaHoraRecepcion: invitacion.fechaHoraRecepcion || null,
+          fechaHoraLimiteConfirmar: invitacion.fechaHoraLimiteConfirmar || null,
+          lugarCeremonia: evento?.nombreLugarCeremonia || '',
+          ceremonyMapUrl: buildGoogleMapsUrl(evento?.latitudLugarCeremonia, evento?.longitudLugarCeremonia),
+          lugarRecepcion: evento?.nombreLugarRecepcion || '',
+          receptionMapUrl: buildGoogleMapsUrl(evento?.latitudLugarRecepcion, evento?.longitudLugarRecepcion),
+          hashtag: invitacion.hashtag || '',
+          colorReservadoUno: invitacion.colorReservadoUno || null,
+          colorReservadoDos: invitacion.colorReservadoDos || null,
+          imagenPrincipal: toSameOriginPublicAssetUrl(evento?.imagenPrincipal || null),
+          nombreEvento: invitacion.nombre || evento?.nombre || '',
+        },
+        invitadoActual: {
+          id: invitadoActual.id,
+          nombre: invitadoActual.nombre,
+          principal: Boolean(invitadoActual.principal),
+          confirmado: Number(invitadoActual.confirmado || 0),
+        },
+        listaInvitados: Array.isArray(invitacion.listaInvitados)
+          ? invitacion.listaInvitados.map((item) => ({
+              id: item.id,
+              nombre: item.nombre,
+              principal: Boolean(item.principal),
+              confirmado: Number(item.confirmado || 0),
+            }))
+          : Array.isArray(listaInvitados)
+          ? listaInvitados.map((item) => ({
+              id: item.id,
+              nombre: item.nombre,
+              principal: Boolean(item.principal),
+              confirmado: Number(item.confirmado || 0),
+            }))
+          : [],
+        modules: config.modules,
+      });
+    } catch (error) {
+      return reject(error);
+    }
+  });
+};
+
+csmDB.confirmarInvitacionPublica = (idInvitacion, respuestas = []) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const invitados = await csmDB.invitadosXinvitaciones(idInvitacion);
+      const allowedIds = new Set((invitados || []).map((item) => Number(item.id)));
+
+      if (!Array.isArray(respuestas) || !respuestas.length) {
+        return reject(400);
+      }
+
+      const invalidResponse = respuestas.find((item) => !allowedIds.has(Number(item?.idInvitado)));
+      if (invalidResponse) {
+        return reject(404);
+      }
+
+      await Promise.all(
+        respuestas.map((item) => csmDB.updConfirmado(Number(item.idInvitado), Number(item.confirmado || 0)))
+      );
+
+      const updated = await csmDB.eventoXinvitacion(idInvitacion);
+      return resolve(updated);
+    } catch (error) {
+      return reject(error);
+    }
+  });
+};
+
 csmDB.updLabelInvitacion = (idInvitacion, label) => {
 
     return new Promise((resolve, reject) => {
@@ -889,11 +1422,14 @@ csmDB.importInvitacionesExcel = (data, idEvento) => {
 };
 
 
-csmDB.addInvitacion = (idEvento, idInvitacion) => {
+csmDB.addInvitacion = (idEvento, idInvitacion, label = '', mensajePersonalizado = '') => {
 
     return new Promise((resolve, reject) => {
 
-        pool.query(`INSERT INTO invitacion (id) VALUES (?)`, idInvitacion, (err, results) => {
+        pool.query(
+          `INSERT INTO invitacion (id, label, mensaje_personalizado) VALUES (?, ?, ?)`,
+          [idInvitacion, label || '', mensajePersonalizado || ''],
+          (err, results) => {
 
             if (err) {
                 return reject(err);
@@ -921,8 +1457,7 @@ csmDB.crearInvitacionEvento = (idEvento, idInvitacion, label = '', mensajePerson
 
     return new Promise(async (resolve, reject) => {
         try {
-            await csmDB.addInvitacion(idEvento, idInvitacion);
-            await csmDB.actualizarInvitacionEvento(idEvento, idInvitacion, label, mensajePersonalizado);
+            await csmDB.addInvitacion(idEvento, idInvitacion, label, mensajePersonalizado);
             const invitacion = await csmDB.eventoXinvitacion(idInvitacion);
             return resolve(invitacion);
         } catch (error) {
@@ -932,7 +1467,7 @@ csmDB.crearInvitacionEvento = (idEvento, idInvitacion, label = '', mensajePerson
 
 };
 
-csmDB.actualizarInvitacionEvento = (idEvento, idInvitacion, label = '', mensajePersonalizado = '') => {
+csmDB.actualizarInvitacionEvento = (idEvento, idInvitacion, label = '', mensajePersonalizado = '', enviada = null) => {
 
     return new Promise((resolve, reject) => {
 
@@ -951,8 +1486,9 @@ csmDB.actualizarInvitacionEvento = (idEvento, idInvitacion, label = '', mensajeP
 
             pool.query(`UPDATE invitacion
                         SET invitacion.label = ?,
-                            invitacion.mensaje_personalizado = ?
-                        WHERE invitacion.id = ?`, [label || '', mensajePersonalizado || '', idInvitacion], (err, results) => {
+                            invitacion.mensaje_personalizado = ?,
+                            invitacion.enviada = COALESCE(?, invitacion.enviada)
+                        WHERE invitacion.id = ?`, [label || '', mensajePersonalizado || '', enviada === null ? null : (enviada ? 1 : 0), idInvitacion], (err, results) => {
 
                 if (err) {
                     return reject(err);
