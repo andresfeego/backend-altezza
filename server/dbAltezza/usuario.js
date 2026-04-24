@@ -77,7 +77,7 @@ csmDB.loginUsuario = (correo, pass) => {
          uss.telefon,
          uss.pass,
          uss.passTemp
-       FROM usuarioSistema AS uss
+       FROM usuariosistema AS uss
        LEFT JOIN rolSistema AS rs 
          ON rs.id = uss.rol
        WHERE uss.user = ?
@@ -146,7 +146,7 @@ csmDB.listarUsuarios = () => {
         uss.telefon,
         uss.estado,
         GROUP_CONCAT(ehu.idEvento ORDER BY ehu.idEvento SEPARATOR ',') AS eventosAsignados
-      FROM usuarioSistema AS uss
+      FROM usuariosistema AS uss
       LEFT JOIN rolSistema AS rs ON rs.id = uss.rol
       LEFT JOIN evento_has_usuario AS ehu ON ehu.idUsuario = uss.id
       GROUP BY uss.id, uss.nombres, uss.apellidos, uss.user, uss.rol, rs.nombre, uss.telefon, uss.estado
@@ -176,7 +176,7 @@ csmDB.crearUsuario = ({ nombres, apellidos, user, rol, telefon }) => {
     pool.query(
       `
       SELECT id
-      FROM usuarioSistema
+      FROM usuariosistema
       WHERE user = ?
       LIMIT 1
       `,
@@ -187,7 +187,7 @@ csmDB.crearUsuario = ({ nombres, apellidos, user, rol, telefon }) => {
 
         pool.query(
           `
-          INSERT INTO usuarioSistema (nombres, apellidos, user, rol, telefon, pass, passTemp)
+          INSERT INTO usuariosistema (nombres, apellidos, user, rol, telefon, pass, passTemp)
           VALUES (?, ?, ?, ?, ?, ?, ?)
           `,
           [nombres, apellidos, user, rol, telefon, tempPassword, tempPassword],
@@ -204,7 +204,7 @@ csmDB.crearUsuario = ({ nombres, apellidos, user, rol, telefon }) => {
                 uss.rol,
                 rs.nombre AS rolNombre,
                 uss.telefon
-              FROM usuarioSistema AS uss
+              FROM usuariosistema AS uss
               LEFT JOIN rolSistema AS rs ON rs.id = uss.rol
               WHERE uss.id = ?
               LIMIT 1
@@ -234,7 +234,7 @@ csmDB.actualizarUsuario = ({ idUsuario, nombres, apellidos, user, rol, telefon, 
     pool.query(
       `
       SELECT id
-      FROM usuarioSistema
+      FROM usuariosistema
       WHERE user = ? AND id <> ?
       LIMIT 1
       `,
@@ -245,7 +245,7 @@ csmDB.actualizarUsuario = ({ idUsuario, nombres, apellidos, user, rol, telefon, 
 
         pool.query(
           `
-          UPDATE usuarioSistema
+          UPDATE usuariosistema
           SET nombres = ?, apellidos = ?, user = ?, rol = ?, telefon = ?, estado = ?
           WHERE id = ?
           `,
@@ -272,7 +272,7 @@ csmDB.regenerarPasswordTemporal = ({ idUsuario }) => {
 
     pool.query(
       `
-      UPDATE usuarioSistema
+      UPDATE usuariosistema
       SET pass = ?, passTemp = ?
       WHERE id = ?
       `,
@@ -295,7 +295,7 @@ csmDB.asignarUsuarioAEvento = ({ idUsuario, idEvento }) => {
     pool.query(
       `
       SELECT rol
-      FROM usuarioSistema
+      FROM usuariosistema
       WHERE id = ?
       LIMIT 1
       `,
@@ -360,7 +360,7 @@ csmDB.obtenerIdsUsuariosClientePorEvento = (idEvento) => {
       `
       SELECT DISTINCT uss.id AS idUsuario
       FROM evento_has_usuario AS ehu
-      INNER JOIN usuarioSistema AS uss ON uss.id = ehu.idUsuario
+      INNER JOIN usuariosistema AS uss ON uss.id = ehu.idUsuario
       WHERE ehu.idEvento = ? AND uss.rol = 2
       ORDER BY uss.id ASC
       `,
@@ -388,7 +388,7 @@ csmDB.obtenerUsuarioSesionPorId = (idUsuario) => {
         rs.nombre AS rolNombre,
         uss.telefon,
         uss.estado
-      FROM usuarioSistema AS uss
+      FROM usuariosistema AS uss
       LEFT JOIN rolSistema AS rs ON rs.id = uss.rol
       WHERE uss.id = ?
       LIMIT 1
@@ -437,7 +437,7 @@ csmDB.obtenerUsuarioPorId = (idUsuario) => {
         uss.telefon,
         uss.estado,
         GROUP_CONCAT(ehu.idEvento ORDER BY ehu.idEvento SEPARATOR ',') AS eventosAsignados
-      FROM usuarioSistema AS uss
+      FROM usuariosistema AS uss
       LEFT JOIN rolSistema AS rs ON rs.id = uss.rol
       LEFT JOIN evento_has_usuario AS ehu ON ehu.idUsuario = uss.id
       WHERE uss.id = ?
@@ -465,7 +465,7 @@ csmDB.cambiarPasswordTemporal = ({ user, passActual, passNueva }) => {
     pool.query(
       `
       SELECT id, user, pass, passTemp
-      FROM usuarioSistema
+      FROM usuariosistema
       WHERE user = ?
       LIMIT 1
       `,
@@ -486,7 +486,7 @@ csmDB.cambiarPasswordTemporal = ({ user, passActual, passNueva }) => {
 
         pool.query(
           `
-          UPDATE usuarioSistema
+          UPDATE usuariosistema
           SET pass = ?, passTemp = NULL
           WHERE id = ?
           `,

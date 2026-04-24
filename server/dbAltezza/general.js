@@ -1825,7 +1825,7 @@ csmDB.tiposGenero = () => {
 
 };
 
-csmDB.usuarioSistema = (user) => {
+csmDB.usuariosistema = (user) => {
   return new Promise((resolve, reject) => {
     pool.query(
       `SELECT 
@@ -1837,7 +1837,7 @@ csmDB.usuarioSistema = (user) => {
          rs.nombre AS rolNombre,
          uss.telefon,
          uss.pass -- solo para verificar en backend
-       FROM usuarioSistema AS uss
+       FROM usuariosistema AS uss
        LEFT JOIN rolSistema AS rs ON rs.id = uss.rol
        WHERE uss.user = ?
        LIMIT 1`,

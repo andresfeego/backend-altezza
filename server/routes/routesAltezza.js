@@ -161,7 +161,7 @@ router.get('/gruposEdad', async (req, res, next) => {
 router.post('/login', async (req, res) => {
   try {
     const { user, pass } = req.body;
-    const results = await general.usuarioSistema(user);
+    const results = await general.usuariosistema(user);
 
     if (!results || results.length === 0) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
