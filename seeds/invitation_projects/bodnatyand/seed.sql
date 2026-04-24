@@ -12,7 +12,7 @@ INSERT INTO evento_invitacion_publica (
   'bodnatyand',
   'wedding-classic',
   'Natalia & Andres | 20 de junio de 2026',
-  'Te invitamos a celebrar nuestra boda en Villa Germana y compartir con nosotros un dia inolvidable.',
+  'Altezza Eventos',
   '/scrAppaltezza/invitations/bodnatyand/cover/seo_cover.webp',
   1,
   JSON_ARRAY(

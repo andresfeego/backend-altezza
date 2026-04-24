@@ -354,6 +354,26 @@ csmDB.quitarUsuarioDeEvento = ({ idUsuario, idEvento }) => {
   });
 };
 
+csmDB.obtenerIdsUsuariosClientePorEvento = (idEvento) => {
+  return new Promise((resolve, reject) => {
+    pool.query(
+      `
+      SELECT DISTINCT uss.id AS idUsuario
+      FROM evento_has_usuario AS ehu
+      INNER JOIN usuarioSistema AS uss ON uss.id = ehu.idUsuario
+      WHERE ehu.idEvento = ? AND uss.rol = 2
+      ORDER BY uss.id ASC
+      `,
+      [idEvento],
+      (err, results) => {
+        if (err) return reject(err);
+        const rows = JSON.parse(JSON.stringify(results || []));
+        return resolve(rows.map((row) => Number(row.idUsuario)).filter((id) => Number.isInteger(id) && id > 0));
+      }
+    );
+  });
+};
+
 
 csmDB.obtenerUsuarioSesionPorId = (idUsuario) => {
   return new Promise((resolve, reject) => {
