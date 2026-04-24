@@ -184,8 +184,8 @@ INSERT INTO evento_invitacion_publica (
   @idEvento,
   'wedding_terracota',
   'Catalina & Andres | 20 de junio de 2026',
-  'Te invitamos a celebrar nuestra boda en Villa Germana y compartir con nosotros un dia inolvidable.',
-  '/scrAppaltezza/invitations/bodcatyand/cover/seo_cover.webp',
+  'Altezza Eventos',
+  '/scrAppaltezza/invitations/bodcatyand/message/logo3.png',
   1,
   JSON_ARRAY(
     JSON_OBJECT(

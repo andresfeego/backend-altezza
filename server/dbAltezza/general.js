@@ -3,7 +3,7 @@ const pool = require('./connection.js');
 let csmDB = {};
 const CLIENT_MODULE_CATALOG = [
   { key: 'feed', label: 'Feed del evento', required: true },
-  { key: 'datos_evento', label: 'Datos del evento', required: true },
+  { key: 'datos_evento', label: 'Datos del evento', required: false, defaultEnabled: true },
   { key: 'calculador_trago', label: 'Calculador de trago', required: false },
   { key: 'fotos_compartidas', label: 'Fotos compartidas', required: false },
   { key: 'inspiracion', label: 'Inspiración', required: false },
@@ -315,7 +315,7 @@ function buildClientModulesResponse(rows = []) {
     key: moduleDef.key,
     label: moduleDef.label,
     required: moduleDef.required,
-    enabled: moduleDef.required ? true : Boolean(enabledByKey[moduleDef.key]),
+    enabled: moduleDef.required ? true : (Object.prototype.hasOwnProperty.call(enabledByKey, moduleDef.key) ? Boolean(enabledByKey[moduleDef.key]) : Boolean(moduleDef.defaultEnabled)),
   }));
 }
 

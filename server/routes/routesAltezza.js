@@ -658,6 +658,19 @@ router.put('/eventos/:idEvento/modulos-cliente', async (req, res) => {
     }
 
     const updatedModules = await general.actualizarModulosClientePorEvento(String(idEvento).trim(), modules);
+    try {
+      const assignedUserIds = await usuario.obtenerIdsUsuariosClientePorEvento(String(idEvento).trim());
+      assignedUserIds.forEach((idUsuario) => {
+        emitUserEvent(idUsuario, {
+          type: 'usuario_eventos_actualizados',
+          idUsuario,
+          idEvento: String(idEvento).trim(),
+          source: 'modulos_cliente_actualizados',
+        });
+      });
+    } catch (notifyError) {
+      console.error('No fue posible emitir SSE tras actualizar modulos del evento.', notifyError);
+    }
 
     return res.status(200).json({
       success: true,
