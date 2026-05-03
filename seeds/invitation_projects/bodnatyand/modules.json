@@ -134,7 +134,8 @@
     "order": 9,
     "config": {
       "imageAlt": "Lluvia de sobres",
-      "imageSrc": "/scrAppaltezza/invitations/bodnatyand/gift_envelopes/lluvia_sobres.png"
+      "imageSrc": "/scrAppaltezza/invitations/bodnatyand/gift_envelopes/lluvia_sobres.png",
+      "leadText": ""
     }
   },
   {
