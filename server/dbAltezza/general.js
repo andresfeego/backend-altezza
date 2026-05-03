@@ -29,6 +29,7 @@ const INVITATION_MODULE_TYPE_CATALOG = new Set([
   'parallax_image_date',
   'dresscode',
   'gift_envelopes',
+  'adults_only_notice',
   'closing_message',
   'welcome_message',
   'photo_slider',

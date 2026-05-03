@@ -148,9 +148,20 @@
     }
   },
   {
-    "type": "attendance_confirm",
+    "type": "adults_only_notice",
     "enabled": true,
     "order": 11,
+    "config": {
+      "title": "Evento solo para adultos",
+      "imageSrc": "/scrAppaltezza/invitations/bodnatyand/adults_only_notice/adults_only.png",
+      "imageAlt": "Evento solo para adultos",
+      "text": "Queremos que se relajen, bailen y celebren a lo grande con nosotros. Esta vez la fiesta es solo para adultos."
+    }
+  },
+  {
+    "type": "attendance_confirm",
+    "enabled": true,
+    "order": 12,
     "config": {
       "title": "Confirma tu asistencia antes del 5 de junio",
       "helperText": "Selecciona la respuesta de cada integrante de esta invitacion.",
@@ -166,7 +177,7 @@
   {
     "type": "closing_message",
     "enabled": true,
-    "order": 12,
+    "order": 13,
     "config": {
       "message": "Gracias por acompanarnos en este momento tan especial. Nos hara muy felices compartir este dia contigo.",
       "frameImage": "/scrAppaltezza/invitations/bodnatyand/closing_message/ornamental_frame_1.png",
