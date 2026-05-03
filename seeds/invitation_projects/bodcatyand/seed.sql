@@ -337,7 +337,8 @@ INSERT INTO evento_invitacion_publica (
       'order', 11,
       'config', JSON_OBJECT(
         'imageAlt', 'Lluvia de sobres',
-        'imageSrc', '/scrAppaltezza/invitations/bodcatyand/gift_envelopes/lluvia_sobres.png'
+        'imageSrc', '/scrAppaltezza/invitations/bodcatyand/gift_envelopes/lluvia_sobres.png',
+        'leadText', 'Tu presencia es nuestro mejor regalo, pero si esta dentro de tus posibilidades y deseas hacernos un presente te dejamos esta opcion.'
       )
     ),
     JSON_OBJECT(

@@ -158,6 +158,16 @@ router.get('/gruposEdad', async (req, res, next) => {
 
 });
 
+router.get('/paisesTelefono', async (req, res, next) => {
+  try {
+    const results = await general.paisesTelefono();
+    res.json(results);
+  } catch (e) {
+    console.log(e);
+    res.sendStatus(500);
+  }
+});
+
 router.post('/login', async (req, res) => {
   try {
     const { user, pass } = req.body;
@@ -888,7 +898,7 @@ router.get('/eventos/:idEvento/invitados', async (req, res) => {
 
 router.post('/eventos/:idEvento/invitados', async (req, res) => {
   try {
-    const { nombre, telefono, whatsapp, parentescoId, grupoEdadId } = req.body;
+    const { nombre, telefono, idPaisTelefono, whatsapp, parentescoId, grupoEdadId } = req.body;
 
     if (!String(nombre || '').trim()) {
       return res.status(400).json({ message: 'El nombre del invitado es obligatorio.' });
@@ -896,6 +906,7 @@ router.post('/eventos/:idEvento/invitados', async (req, res) => {
 
     const parentescoParsed = parseOptionalPositiveInt(parentescoId);
     const grupoEdadParsed = parseOptionalPositiveInt(grupoEdadId);
+    const paisTelefonoParsed = parseOptionalPositiveInt(idPaisTelefono);
 
     if (Number.isNaN(parentescoParsed)) {
       return res.status(400).json({ message: 'parentescoId invalido.' });
@@ -904,11 +915,15 @@ router.post('/eventos/:idEvento/invitados', async (req, res) => {
     if (Number.isNaN(grupoEdadParsed)) {
       return res.status(400).json({ message: 'grupoEdadId invalido.' });
     }
+    if (Number.isNaN(paisTelefonoParsed) || !paisTelefonoParsed) {
+      return res.status(400).json({ message: 'idPaisTelefono invalido.' });
+    }
 
     const result = await general.addInvitadoEvento(
       req.params.idEvento,
       String(nombre).trim(),
       telefono,
+      paisTelefonoParsed,
       Boolean(whatsapp),
       parentescoParsed,
       grupoEdadParsed
@@ -923,7 +938,7 @@ router.post('/eventos/:idEvento/invitados', async (req, res) => {
 
 router.put('/eventos/:idEvento/invitados/:idInvitado', async (req, res) => {
   try {
-    const { nombre, telefono, whatsapp, parentescoId, grupoEdadId, estadoAsistenciaId } = req.body;
+    const { nombre, telefono, idPaisTelefono, whatsapp, parentescoId, grupoEdadId, estadoAsistenciaId } = req.body;
 
     if (!String(nombre || '').trim()) {
       return res.status(400).json({ message: 'El nombre del invitado es obligatorio.' });
@@ -931,6 +946,7 @@ router.put('/eventos/:idEvento/invitados/:idInvitado', async (req, res) => {
 
     const parentescoParsed = parseOptionalPositiveInt(parentescoId);
     const grupoEdadParsed = parseOptionalPositiveInt(grupoEdadId);
+    const paisTelefonoParsed = parseOptionalPositiveInt(idPaisTelefono);
 
     if (Number.isNaN(parentescoParsed)) {
       return res.status(400).json({ message: 'parentescoId invalido.' });
@@ -939,12 +955,16 @@ router.put('/eventos/:idEvento/invitados/:idInvitado', async (req, res) => {
     if (Number.isNaN(grupoEdadParsed)) {
       return res.status(400).json({ message: 'grupoEdadId invalido.' });
     }
+    if (Number.isNaN(paisTelefonoParsed) || !paisTelefonoParsed) {
+      return res.status(400).json({ message: 'idPaisTelefono invalido.' });
+    }
 
     const result = await general.actualizarInvitadoEvento(
       req.params.idEvento,
       req.params.idInvitado,
       String(nombre).trim(),
       telefono,
+      paisTelefonoParsed,
       Boolean(whatsapp),
       parentescoParsed,
       grupoEdadParsed,

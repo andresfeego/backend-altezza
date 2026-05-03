@@ -29,6 +29,7 @@ const INVITATION_MODULE_TYPE_CATALOG = new Set([
   'parallax_image_date',
   'dresscode',
   'gift_envelopes',
+  'adults_only_notice',
   'closing_message',
   'welcome_message',
   'photo_slider',
@@ -423,6 +424,21 @@ csmDB.gruposEdad = () => {
 
     })
 
+};
+
+csmDB.paisesTelefono = () => {
+  return new Promise((resolve, reject) => {
+    pool.query(
+      `SELECT id, iso2, nombre, codigoTelefono, emojiBandera, activo, orden
+       FROM pais_telefono
+       WHERE activo = 1
+       ORDER BY orden ASC, nombre ASC`,
+      (err, results) => {
+        if (err) return reject(err);
+        return resolve(results || []);
+      }
+    );
+  });
 };
 
 
@@ -973,6 +989,11 @@ csmDB.invitadosClienteXevento = (idEvento) => {
         ehi.idEvento,
         inv.nombre,
         inv.telefono,
+        inv.idPaisTelefono,
+        pt.codigoTelefono AS codigoPaisTelefono,
+        pt.iso2 AS paisIso2,
+        pt.nombre AS paisNombre,
+        pt.emojiBandera AS paisBandera,
         inv.wp,
         inv.parentesco,
         parent.parentesco AS parentescoLabel,
@@ -988,6 +1009,8 @@ csmDB.invitadosClienteXevento = (idEvento) => {
       FROM evento_has_invitado AS ehi
       JOIN invitado AS inv
         ON inv.id = ehi.idInvitado
+      LEFT JOIN pais_telefono AS pt
+        ON pt.id = inv.idPaisTelefono
       LEFT JOIN parentesco AS parent
         ON parent.id = inv.parentesco
       LEFT JOIN grupoEdad AS ge
@@ -1012,12 +1035,12 @@ csmDB.invitadosClienteXevento = (idEvento) => {
   });
 };
 
-csmDB.addInvitadoEvento = (idEvento, nombre, telefono, wp, parentesco, grupoEdad) => {
+csmDB.addInvitadoEvento = (idEvento, nombre, telefono, idPaisTelefono, wp, parentesco, grupoEdad) => {
   return new Promise((resolve, reject) => {
     pool.query(
-      `INSERT INTO invitado (nombre, principal, telefono, wp, parentesco, grupoEdad)
-       VALUES (?, 0, ?, ?, ?, ?)`,
-      [nombre, telefono || '', wp ? '1' : '0', parentesco, grupoEdad],
+      `INSERT INTO invitado (nombre, principal, telefono, idPaisTelefono, wp, parentesco, grupoEdad)
+       VALUES (?, 0, ?, ?, ?, ?, ?)`,
+      [nombre, telefono || '', idPaisTelefono, wp ? '1' : '0', parentesco, grupoEdad],
       (err, results) => {
         if (err) {
           return reject(err);
@@ -1041,7 +1064,7 @@ csmDB.addInvitadoEvento = (idEvento, nombre, telefono, wp, parentesco, grupoEdad
   });
 };
 
-csmDB.actualizarInvitadoEvento = (idEvento, idInvitado, nombre, telefono, wp, parentesco, grupoEdad, confirmado = null) => {
+csmDB.actualizarInvitadoEvento = (idEvento, idInvitado, nombre, telefono, idPaisTelefono, wp, parentesco, grupoEdad, confirmado = null) => {
   return new Promise((resolve, reject) => {
     pool.query(
       `SELECT 1
@@ -1058,8 +1081,8 @@ csmDB.actualizarInvitadoEvento = (idEvento, idInvitado, nombre, telefono, wp, pa
           return reject(404);
         }
 
-        const fields = ['nombre = ?', 'telefono = ?', 'wp = ?', 'parentesco = ?', 'grupoEdad = ?'];
-        const values = [nombre, telefono || '', wp ? '1' : '0', parentesco, grupoEdad];
+        const fields = ['nombre = ?', 'telefono = ?', 'idPaisTelefono = ?', 'wp = ?', 'parentesco = ?', 'grupoEdad = ?'];
+        const values = [nombre, telefono || '', idPaisTelefono, wp ? '1' : '0', parentesco, grupoEdad];
 
         if (confirmado !== null && confirmado !== undefined && confirmado !== '') {
           fields.push('confirmado = ?');
@@ -1358,11 +1381,11 @@ csmDB.updLabelInvitacion = (idInvitacion, label) => {
 
 csmDB.updMensajeInvitacion = csmDB.updLabelInvitacion;
 
-csmDB.addInvitado = (idInvitacion, nombre, principal, telefono, wp, parentesco, grupoEdad) => {
+csmDB.addInvitado = (idInvitacion, nombre, principal, telefono, wp, parentesco, grupoEdad, idPaisTelefono = null) => {
 
     return new Promise((resolve, reject) => {
 
-        pool.query(`INSERT INTO invitado ( nombre, principal, telefono, wp, parentesco, grupoEdad ) VALUES (?,?,?,?,?,?)`, [nombre, principal, telefono, wp, parentesco, grupoEdad], (err, results) => {
+        pool.query(`INSERT INTO invitado ( nombre, principal, telefono, idPaisTelefono, wp, parentesco, grupoEdad ) VALUES (?,?,?,COALESCE(?, (SELECT id FROM pais_telefono WHERE iso2='CO' LIMIT 1)),?,?,?)`, [nombre, principal, telefono, idPaisTelefono, wp, parentesco, grupoEdad], (err, results) => {
 
             if (err) {
                 return reject(err);
