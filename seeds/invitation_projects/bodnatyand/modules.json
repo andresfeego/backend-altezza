@@ -54,7 +54,7 @@
     "order": 5,
     "config": {
       "godparents": [],
-      "coupleLabel": "Con nuestro amor, con la presencia de Dios entre nosotros y la bendicion de nuestros padres",
+      "coupleLabel": "Con nuestro amor, con la presencia de Dios entre nosotros y la bendición de nuestros padres, junto a nuestro amado hijo Juan Jose, quien es testigo y fruto de este amor, decidimos unir nuestras vidas en sagrado matrimonio",
       "parentsBride": [
         {
           "name": "Milena Esperanza Porras Amaya",
@@ -122,7 +122,9 @@
         "#D1B5AA",
         "#D8926F",
         "#AAA891",
-        "#ABB0A8"
+        "#ABB0A8",
+        "#95A789",
+        "#95A3B8"
       ]
     }
   },
