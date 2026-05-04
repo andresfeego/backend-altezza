@@ -101,7 +101,7 @@ INSERT INTO evento_invitacion_publica (
 ) VALUES (
   'bodnatyand',
   'wedding-classic',
-  'Natalia & Andres | 20 de junio de 2026',
+  'Natalia & Andres',
   'Altezza Eventos',
   '/scrAppaltezza/invitations/bodnatyand/cover/seo_cover.webp',
   1,
