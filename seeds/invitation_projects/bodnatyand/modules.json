@@ -163,7 +163,7 @@
     "enabled": true,
     "order": 12,
     "config": {
-      "title": "Confirma tu asistencia antes del 5 de junio",
+      "title": "Confirma tu asistencia antes del 10 de junio",
       "helperText": "Selecciona la respuesta de cada integrante de esta invitacion.",
       "deadlineMode": "fechaHoraLimiteConfirmar",
       "customMessages": {
