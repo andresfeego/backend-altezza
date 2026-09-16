@@ -1,5 +1,7 @@
 const pool = require('./connection.js');
 const { isConfirmationClosed, validateAttendanceResponses } = require('../utils/invitationAttendance');
+const { resolveInvitationLocations } = require('../utils/invitationLocations');
+const { buildDefaultInvitationModules } = require('../utils/invitationModuleDefaults');
 
 let csmDB = {};
 const CLIENT_MODULE_CATALOG = [
@@ -90,181 +92,6 @@ function normalizeInvitationAssetValue(value) {
   return typeof value === 'string' ? toSameOriginPublicAssetUrl(value) : value;
 }
 
-function buildGoogleMapsUrl(lat, lng) {
-  if (lat == null || lng == null || lat === '' || lng === '') return null;
-  const latitude = Number(lat);
-  const longitude = Number(lng);
-
-  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-    return null;
-  }
-
-  return `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
-}
-
-function buildDefaultInvitationModules(evento = {}) {
-  const isTerracotaTemplate = String(evento?.templateKey || '').trim() === 'wedding_terracota';
-  const heroModuleType = isTerracotaTemplate ? 'hero_image_2' : 'hero_image_1';
-
-  return [
-    {
-      type: 'music_player',
-      enabled: true,
-      order: 1,
-      config: {
-        title: 'Nuestra cancion',
-        trackLabel: '',
-        audioSrc: null,
-        autoplay: true,
-        initiallyMuted: false,
-      },
-    },
-    {
-      type: heroModuleType,
-      enabled: true,
-      order: 2,
-      config: {
-        text1: 'Altezza invitaciones',
-        imageSrc: evento?.imagenPrincipal || null,
-        backgroundImage: evento?.imagenPrincipal || null,
-        logoImage: null,
-      },
-    },
-    {
-      type: 'simple_image',
-      enabled: true,
-      order: 3,
-      config: {
-        imageSrc: evento?.imagenPrincipal || null,
-        alt: 'Imagen de la invitacion',
-      },
-    },
-    {
-      type: 'biblical_quote',
-      enabled: true,
-      order: 4,
-      config: {
-        passageText: 'Y sobre todas estas cosas vestios de amor, que es el vinculo perfecto.',
-        passageReference: 'Colosenses 3:14',
-      },
-    },
-    {
-      type: 'countdown_image',
-      enabled: true,
-      order: 5,
-      config: {
-        title: 'Cuenta regresiva',
-        target: 'fechaHoraCeremonia',
-        backgroundImage: evento?.imagenPrincipal || null,
-      },
-    },
-    {
-      type: 'parallax_image_date',
-      enabled: true,
-      order: 6,
-      config: {
-        backgroundImage: evento?.imagenPrincipal || null,
-        target: 'fechaHoraCeremonia',
-      },
-    },
-    {
-      type: 'welcome_message',
-      enabled: true,
-      order: 7,
-      config: {
-        title: evento?.nombre || 'Nuestra invitacion',
-        subtitle: 'Queremos celebrar contigo este momento especial.',
-      },
-    },
-    {
-      type: 'photo_slider',
-      enabled: true,
-      order: 8,
-      config: {
-        images: evento?.imagenPrincipal ? [evento.imagenPrincipal] : [],
-      },
-    },
-    {
-      type: 'countdown',
-      enabled: true,
-      order: 9,
-      config: {
-        target: 'fechaHoraCeremonia',
-        title: 'Cuenta regresiva',
-      },
-    },
-    {
-      type: 'couple_family',
-      enabled: true,
-      order: 10,
-      config: {
-        coupleLabel: evento?.nombre || '',
-        parentsBride: [],
-        parentsGroom: [],
-        godparents: [],
-      },
-    },
-    ...(isTerracotaTemplate
-      ? [{
-        type: 'save_the_date_calendar',
-        enabled: true,
-        order: 11,
-        config: {
-          message: 'Tenemos el gusto de invitarlos a nuestra boda , esperamos que nos acompañen en este momento inolvidable',
-        },
-      }]
-      : []),
-    {
-      type: 'event_details',
-      enabled: true,
-      order: 12,
-      config: {
-        showCeremony: true,
-        showReception: true,
-        showDressCode: true,
-        showHashtag: true,
-        showGiftInfo: true,
-        giftLabel: 'Lluvia de sobres',
-      },
-    },
-    {
-      type: 'dresscode',
-      enabled: true,
-      order: 13,
-      config: {
-        title: 'Dress code',
-      },
-    },
-    {
-      type: 'gift_envelopes',
-      enabled: true,
-      order: 14,
-      config: {
-        imageSrc: null,
-        imageAlt: 'Lluvia de sobres',
-      },
-    },
-    {
-      type: 'closing_message',
-      enabled: true,
-      order: 15,
-      config: {
-        message: 'Gracias por acompanarnos en este momento tan especial. Nos hara muy felices compartir este dia contigo.',
-        frameImage: null,
-        frameImageAlt: 'Marco ornamental',
-      },
-    },
-    {
-      type: 'attendance_confirm',
-      enabled: true,
-      order: 16,
-      config: {
-        title: 'Confirma tu asistencia',
-        deadlineMode: 'fechaHoraLimiteConfirmar',
-      },
-    },
-  ];
-}
 
 function normalizeInvitationModules(modules, evento = {}) {
   const fallback = buildDefaultInvitationModules(evento);
@@ -1301,9 +1128,8 @@ csmDB.obtenerInvitacionPublicaPorIds = (idInvitacion, idInvitado) => {
           fechaHoraLimiteConfirmar: invitacion.fechaHoraLimiteConfirmar || null,
           confirmationClosed: isConfirmationClosed(invitacion.fechaHoraLimiteConfirmar),
           lugarCeremonia: evento?.nombreLugarCeremonia || '',
-          ceremonyMapUrl: buildGoogleMapsUrl(evento?.latitudLugarCeremonia, evento?.longitudLugarCeremonia),
           lugarRecepcion: evento?.nombreLugarRecepcion || '',
-          receptionMapUrl: buildGoogleMapsUrl(evento?.latitudLugarRecepcion, evento?.longitudLugarRecepcion),
+          ...resolveInvitationLocations(evento, config.modules),
           hashtag: invitacion.hashtag || '',
           colorReservadoUno: invitacion.colorReservadoUno || null,
           colorReservadoDos: invitacion.colorReservadoDos || null,
