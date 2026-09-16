@@ -1,4 +1,5 @@
 const pool = require('./connection.js');
+const { isConfirmationClosed, validateAttendanceResponses } = require('../utils/invitationAttendance');
 
 let csmDB = {};
 const CLIENT_MODULE_CATALOG = [
@@ -90,6 +91,7 @@ function normalizeInvitationAssetValue(value) {
 }
 
 function buildGoogleMapsUrl(lat, lng) {
+  if (lat == null || lng == null || lat === '' || lng === '') return null;
   const latitude = Number(lat);
   const longitude = Number(lng);
 
@@ -1297,6 +1299,7 @@ csmDB.obtenerInvitacionPublicaPorIds = (idInvitacion, idInvitado) => {
           fechaHoraCeremonia: invitacion.fechaHoraCeremonia || null,
           fechaHoraRecepcion: invitacion.fechaHoraRecepcion || null,
           fechaHoraLimiteConfirmar: invitacion.fechaHoraLimiteConfirmar || null,
+          confirmationClosed: isConfirmationClosed(invitacion.fechaHoraLimiteConfirmar),
           lugarCeremonia: evento?.nombreLugarCeremonia || '',
           ceremonyMapUrl: buildGoogleMapsUrl(evento?.latitudLugarCeremonia, evento?.longitudLugarCeremonia),
           lugarRecepcion: evento?.nombreLugarRecepcion || '',
@@ -1336,31 +1339,33 @@ csmDB.obtenerInvitacionPublicaPorIds = (idInvitacion, idInvitado) => {
   });
 };
 
-csmDB.confirmarInvitacionPublica = (idInvitacion, respuestas = []) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const invitados = await csmDB.invitadosXinvitaciones(idInvitacion);
-      const allowedIds = new Set((invitados || []).map((item) => Number(item.id)));
-
-      if (!Array.isArray(respuestas) || !respuestas.length) {
-        return reject(400);
-      }
-
-      const invalidResponse = respuestas.find((item) => !allowedIds.has(Number(item?.idInvitado)));
-      if (invalidResponse) {
-        return reject(404);
-      }
-
-      await Promise.all(
-        respuestas.map((item) => csmDB.updConfirmado(Number(item.idInvitado), Number(item.confirmado || 0)))
-      );
-
-      const updated = await csmDB.eventoXinvitacion(idInvitacion);
-      return resolve(updated);
-    } catch (error) {
-      return reject(error);
+csmDB.confirmarInvitacionPublica = async (idInvitacion, respuestas = []) => {
+  const connection = await pool.promise().getConnection();
+  try {
+    await connection.beginTransaction();
+    const [events] = await connection.query(`
+      SELECT e.fechaHoraLimiteConfirmar
+      FROM evento e JOIN evento_has_invitacion ehi ON ehi.idEvento = e.id
+      WHERE ehi.idInvitacion = ? FOR UPDATE
+    `, [idInvitacion]);
+    if (!events.length) throw 404;
+    if (isConfirmationClosed(events[0].fechaHoraLimiteConfirmar)) throw 409;
+    const [members] = await connection.query(
+      'SELECT idInvitado FROM invitacion_has_invitado WHERE idInvitacion = ? FOR UPDATE',
+      [idInvitacion]
+    );
+    validateAttendanceResponses(respuestas, new Set(members.map((item) => Number(item.idInvitado))));
+    for (const item of respuestas) {
+      await connection.query('UPDATE invitado SET confirmado = ? WHERE id = ?', [Number(item.confirmado), Number(item.idInvitado)]);
     }
-  });
+    await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+  return csmDB.eventoXinvitacion(idInvitacion);
 };
 
 csmDB.updLabelInvitacion = (idInvitacion, label) => {

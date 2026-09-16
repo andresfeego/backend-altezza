@@ -1,0 +1,37 @@
+[
+  { "type": "envelop_intro", "enabled": true, "order": 1, "config": {
+    "brideName": "Mayra", "groomName": "Samuel",
+    "backgroundSrc": "/scrAppaltezza/invitations/bodmys/cover/fondo01portrait.png",
+    "backgroundDesktopSrc": "/scrAppaltezza/invitations/bodmys/cover/fondo01wide.png",
+    "envelopeSrc": "/scrAppaltezza/invitations/bodmys/cover/sobre-cerrado-sin-fondo.png",
+    "monogramSrc": "/scrAppaltezza/invitations/bodmys/cover/monograma-MS-transparente.png"
+  } },
+  { "type": "hero_image_1", "enabled": true, "order": 2, "config": {
+    "brideName": "Mayra", "groomName": "Samuel",
+    "brideFullName": "Mayra Lucia Jaimes Cantillo", "groomFullName": "Samuel José Torres Arciniegas",
+    "message": "Después de tantos años construyendo sueños juntos, ha llegado el momento de celebrar nuestro mayor proyecto: una vida en común.",
+    "imageSrc": ""
+  } },
+  { "type": "couple_family", "enabled": true, "order": 3, "config": {
+    "parentsBride": ["Edith Maria Cantillo Rodriguez", "Néstor Raúl Jaimes Jaimes"],
+    "parentsGroom": ["Elsa Adriana Arciniegas Ochoa", "Mario Torres Vaca"],
+    "godparents": ["Mario Alfonso Castañeda Torres", "Silvia Patricia Ortiz Castillo"],
+    "message": "Con la bendición de Dios, diremos sí en el altar, esperamos que nos acompañes en este momento espiritual."
+  } },
+  { "type": "event_details", "enabled": true, "order": 4, "config": {
+    "showCeremony": true, "showReception": true,
+    "ceremonyAddress": "Cra. 10 #101, Sogamoso, Boyacá",
+    "receptionAddress": "Casa 15 · Firavitoba, Boyacá",
+    "ceremonyMapUrl": "https://maps.app.goo.gl/Yg9gPkDiXuKGjXtx9",
+    "receptionMapUrl": "https://maps.app.goo.gl/bYAuY5ZRu9PBy2rf8",
+    "receptionMessage": "Celebremos juntos al ritmo de la comida, el baile, la fogata y buena música, prepara tus mejores pasos de baile!"
+  } },
+  { "type": "countdown", "enabled": true, "order": 5, "config": { "title": "Cada vez más cerca", "target": "fechaHoraCeremonia" } },
+  { "type": "attendance_confirm", "enabled": true, "order": 6, "config": {
+    "title": "¿Nos acompañas?",
+    "introMessage": "Estamos felices de que hagas parte de celebrar nuestro amor, eres una persona muy especial para nosotros.",
+    "helperText": "Confirma la asistencia de cada integrante de tu invitación."
+  } },
+  { "type": "music_player", "enabled": false, "order": 7, "config": { "audioSrc": "", "title": "Nuestra canción", "autoplay": false, "initiallyMuted": true } },
+  { "type": "photo_slider", "enabled": false, "order": 8, "config": { "images": [] } }
+]

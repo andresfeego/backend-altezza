@@ -1333,8 +1333,12 @@ router.put('/public/invitaciones/:idInvitacion/confirmacion', async (req, res) =
     const payload = await general.confirmarInvitacionPublica(req.params.idInvitacion, respuestas);
     return res.status(200).json(payload);
   } catch (e) {
+    if (e === 409) {
+      return res.status(409).json({ error: 409, message: 'El plazo para confirmar asistencia ha finalizado.' });
+    }
+
     if (e === 400) {
-      return res.status(400).json({ error: 400, message: 'Debes enviar al menos una respuesta valida.' });
+      return res.status(400).json({ error: 400, message: 'Envía respuestas válidas, sin integrantes repetidos.' });
     }
 
     if (e === 404) {
