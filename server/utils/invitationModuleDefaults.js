@@ -87,6 +87,7 @@ function buildDefaultInvitationModules(evento = {}) {
       order: 9,
       config: {
         target: 'fechaHoraCeremonia',
+        showDate: false,
         title: '',
       },
     },

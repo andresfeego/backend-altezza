@@ -40,6 +40,7 @@ const INVITATION_MODULE_TYPE_CATALOG = new Set([
   'music_player',
   'countdown',
   'couple_family',
+  'couple_names',
   'save_the_date_calendar',
   'event_details',
   'attendance_confirm',

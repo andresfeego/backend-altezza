@@ -6,6 +6,49 @@ const { buildDefaultInvitationModules } = require('../server/utils/invitationMod
 const { configureCopy } = require('../seeds/invitation_projects/bodmys/configure-copy');
 const { replaceWelcomeWithQuote } = require('../seeds/invitation_projects/bodmys/replace-welcome-with-quote');
 const { configureEnvelopeVideo } = require('../seeds/invitation_projects/bodmys/configure-envelope-video');
+const { configureCoupleNames } = require('../seeds/invitation_projects/bodmys/configure-couple-names');
+const { configureDateSection } = require('../seeds/invitation_projects/bodmys/configure-date-section');
+
+test('date section migration preserves customer content, inserts calendar once and retains explicit choices', () => {
+  const seed = [
+    { type: 'countdown', config: { showDate: true, title: 'Faltan' } },
+    { type: 'save_the_date_calendar', enabled: true, config: { message: 'El gran día' } },
+  ];
+  const before = [
+    { type: 'couple_names', order: 1, config: { brideName: 'Ana', groomName: 'Luis' } },
+    { type: 'event_details', order: 2, config: { title: 'Lugares elegidos' } },
+    { type: 'countdown', enabled: true, order: 3, config: { title: 'Cada vez más cerca', message: 'Mensaje elegido', target: 'fechaHoraCeremonia' } },
+  ];
+  const snapshot = structuredClone(before);
+  const after = configureDateSection(before, seed);
+  assert.deepEqual(before, snapshot);
+  assert.deepEqual(after.map(m => m.type), ['couple_names', 'countdown', 'save_the_date_calendar', 'event_details']);
+  assert.deepEqual(after[1].config, { ...before[2].config, showDate: true, title: 'Faltan' });
+  assert.deepEqual(configureDateSection(after, seed), after);
+  const customized = after.map(m => m.type === 'countdown' ? { ...m, config: { ...m.config, showDate: false, title: 'Nuestro título' } } : m.type === 'save_the_date_calendar' ? { ...m, enabled: false, config: { message: '' } } : m);
+  assert.deepEqual(configureDateSection(customized, seed), customized);
+  assert.throws(() => configureDateSection([...before, { ...before[2], order: 4 }], seed));
+});
+
+test('names migration places one module after family, preserves other data and is repeatable', () => {
+  const before = [
+    { type: 'hero_image_1', enabled: true, order: 1, config: { logoImage: '/original.png' } },
+    { type: 'couple_family', enabled: true, order: 2, config: { title: 'Familia' } },
+    { type: 'event_details', enabled: true, order: 3, config: { title: 'Lugares' } },
+  ];
+  const snapshot = structuredClone(before);
+  const names = { brideName: 'Ana', groomName: 'Luis' };
+  const after = configureCoupleNames(before, names);
+  assert.deepEqual(before, snapshot);
+  assert.deepEqual(after.map((m) => m.type), ['hero_image_1', 'couple_family', 'couple_names', 'event_details']);
+  assert.deepEqual(after.filter((m) => m.type !== 'couple_names').map(({ order, ...m }) => m), before.map(({ order, ...m }) => m));
+  assert.deepEqual(configureCoupleNames(after, names), after);
+  const customized = after.map((m) => m.type === 'couple_names' ? { ...m, enabled: false, config: { brideName: 'Elegida', groomName: 'Elegido' } } : m);
+  assert.deepEqual(configureCoupleNames(customized, names), customized);
+  assert.throws(() => configureCoupleNames(before.filter((m) => m.type !== 'couple_family'), names));
+  assert.throws(() => configureCoupleNames(before, { brideName: 'Ana' }));
+  assert.throws(() => configureCoupleNames([...after, { ...after[2], order: 99 }], names));
+});
 
 test('envelope video migration changes only its source and preserves images, text and module order', () => {
   const before = [{ type: 'envelop_intro', enabled: true, order: 1, config: { backgroundSrc: '/portrait.jpg', backgroundDesktopSrc: '/wide.jpg', invitationLabel: 'Familia', monogramSrc: '/ms.png' } }, { type: 'biblical_quote', order: 3, config: { passageText: 'Frase', passageReference: '' } }];

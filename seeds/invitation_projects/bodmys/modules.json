@@ -24,18 +24,27 @@
     }
   },
   {
+    "type": "simple_image",
+    "enabled": true,
+    "config": {
+      "imageSrc": "/scrAppaltezza/invitations/bodmys/photos/mayra-samuel-fondo-desenfocado.webp",
+      "alt": "Mayra y Samuel juntos"
+    },
+    "order": 3
+  },
+  {
     "type": "biblical_quote",
     "enabled": true,
     "config": {
       "passageText": "Después de tantos años construyendo sueños juntos, ha llegado el momento de celebrar nuestro mayor proyecto: una vida en común.",
       "passageReference": ""
     },
-    "order": 3
+    "order": 4
   },
   {
     "type": "couple_family",
     "enabled": true,
-    "order": 4,
+    "order": 5,
     "config": {
       "parentsBride": [
         "Edith Maria Cantillo Rodriguez",
@@ -49,14 +58,47 @@
         "Mario Alfonso Castañeda Torres",
         "Silvia Patricia Ortiz Castillo"
       ],
-      "coupleLabel": "Con quienes nos han acompañado",
-      "title": "Nuestras raíces"
+      "coupleLabel": "",
+      "title": "De la mano de quienes nos enseñaron a amar,\nnuestros padres, queremos compartir contigo el comienzo de una nueva historia."
     }
+  },
+  {
+    "type": "couple_names",
+    "enabled": true,
+    "config": {
+      "brideName": "Mayra",
+      "groomName": "Samuel",
+      "sectionBackground": {
+        "imageSrc": "/scrAppaltezza/invitations/bodmys/couple_names/jardin-luz-natural-v1.png",
+        "overlayOpacity": 0.1
+      }
+    },
+    "order": 6
+  },
+  {
+    "type": "countdown",
+    "enabled": true,
+    "order": 7,
+    "config": {
+      "title": "Faltan",
+      "target": "fechaHoraCeremonia",
+      "message": "Cada instante nos acerca a compartir este día contigo.",
+      "completedMessage": "El momento esperado ya llegó.",
+      "showDate": true
+    }
+  },
+  {
+    "type": "save_the_date_calendar",
+    "enabled": true,
+    "config": {
+      "message": "El gran día"
+    },
+    "order": 8
   },
   {
     "type": "event_details",
     "enabled": true,
-    "order": 5,
+    "order": 9,
     "config": {
       "showCeremony": true,
       "showReception": true,
@@ -70,20 +112,142 @@
     }
   },
   {
-    "type": "countdown",
+    "type": "gift_envelopes",
     "enabled": true,
-    "order": 6,
     "config": {
-      "title": "Cada vez más cerca",
-      "target": "fechaHoraCeremonia",
-      "message": "Cada instante nos acerca a compartir este día contigo.",
-      "completedMessage": "El momento esperado ya llegó."
-    }
+      "title": "Lluvia de sobres",
+      "leadText": "Tu presencia es nuestro mejor regalo; si deseas obsequiarnos algo, agradeceremos mucho tu aporte en lluvia de sobres.",
+      "imageSrc": "/scrAppaltezza/invitations/bodmys/gift_envelopes/sobre-botanico-v1.png",
+      "imageAlt": "Sobre beige con sello botánico verde"
+    },
+    "order": 10
+  },
+  {
+    "type": "dresscode",
+    "enabled": true,
+    "config": {
+      "title": "Código de vestimenta",
+      "attireLabel": "Garden Elegance",
+      "message": "Un estilo elegante y fresco, pensado para disfrutar de una celebración al aire libre.\n\nPor tratarse de una celebración en jardín, recomendamos llevar un abrigo, chal o pieza adicional para disfrutar cómodamente de la noche.",
+      "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/grupo-vestidos-acuarela-v1.png",
+      "imageAlt": "Ilustración en acuarela de nueve mujeres con ramos; la novia de blanco al centro y sus acompañantes en tonos verdes y terracota.",
+      "suggestedColorsTitle": "Tonos sugeridos",
+      "avoidedColorsTitle": "Evita blanco, marfil y beige",
+      "suggestedColors": [
+        {
+          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1.png",
+          "label": "Verde pizarra",
+          "crop": {
+            "x": 1.219512,
+            "y": 80.570801,
+            "width": 8.672087,
+            "height": 14.050494
+          }
+        },
+        {
+          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1.png",
+          "label": "Salvia claro",
+          "crop": {
+            "x": 12.330623,
+            "y": 80.570801,
+            "width": 8.672087,
+            "height": 14.050494
+          }
+        },
+        {
+          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1.png",
+          "label": "Terracota",
+          "crop": {
+            "x": 23.712737,
+            "y": 80.570801,
+            "width": 8.672087,
+            "height": 14.050494
+          }
+        },
+        {
+          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1.png",
+          "label": "Oliva",
+          "crop": {
+            "x": 35.298103,
+            "y": 80.570801,
+            "width": 8.672087,
+            "height": 14.050494
+          }
+        },
+        {
+          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1.png",
+          "label": "Canela",
+          "crop": {
+            "x": 58.265583,
+            "y": 80.570801,
+            "width": 8.672087,
+            "height": 14.050494
+          }
+        },
+        {
+          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1.png",
+          "label": "Terracota rojizo",
+          "crop": {
+            "x": 69.783198,
+            "y": 80.570801,
+            "width": 8.672087,
+            "height": 14.050494
+          }
+        },
+        {
+          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1.png",
+          "label": "Salvia grisáceo",
+          "crop": {
+            "x": 81.707317,
+            "y": 80.570801,
+            "width": 8.672087,
+            "height": 14.050494
+          }
+        },
+        {
+          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1.png",
+          "label": "Verde bosque",
+          "crop": {
+            "x": 92.682927,
+            "y": 80.570801,
+            "width": 7.04607,
+            "height": 11.416026
+          }
+        }
+      ],
+      "avoidedColors": [
+        {
+          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1.png",
+          "label": "Blanco",
+          "crop": {
+            "x": 46.680217,
+            "y": 80.570801,
+            "width": 8.672087,
+            "height": 14.050494
+          }
+        },
+        {
+          "label": "Marfil",
+          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/tela-marfil-v1.webp",
+          "crop": {
+            "x": 25,
+            "y": 25,
+            "width": 50,
+            "height": 50
+          }
+        },
+        {
+          "label": "Beige",
+          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/tela-beige-v1.webp"
+        }
+      ]
+    },
+    "order": 11
   },
   {
     "type": "attendance_confirm",
     "enabled": true,
-    "order": 7,
+    "order": 12,
     "config": {
       "title": "¿Nos acompañas?",
       "helperText": "Estamos felices de que hagas parte de celebrar nuestro amor, eres una persona muy especial para nosotros.\n\nConfirma la asistencia de cada integrante de tu invitación."
@@ -92,7 +256,7 @@
   {
     "type": "music_player",
     "enabled": false,
-    "order": 8,
+    "order": 13,
     "config": {
       "audioSrc": "",
       "title": "Nuestra canción",
@@ -103,7 +267,7 @@
   {
     "type": "photo_slider",
     "enabled": false,
-    "order": 9,
+    "order": 14,
     "config": {
       "images": []
     }
@@ -114,6 +278,6 @@
     "config": {
       "message": "Con mucho cariño,\nMayra & Samuel"
     },
-    "order": 10
+    "order": 15
   }
 ]
