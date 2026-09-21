@@ -1,5 +1,32 @@
 # Mayra & Samuel — Oliva (local)
 
+## Social sharing image
+
+`/invitations/oliva/mayra-samuel-hero-share-v1.jpg` is a 1200 × 630 JPEG
+screenshot of the actual Oliva hero: botanical relief, MS monogram, “Nos casamos”
+and the event date. The image lives in the frontend's `public/invitations/oliva/`
+directory and is served without authentication. The versioned filename gives the
+updated artwork its own URL. The old cover remains available for existing links.
+
+To update an existing local event without reseeding its modules:
+
+```sh
+node seeds/invitation_projects/bodmys/configure-share-image.js
+```
+
+The script backs up the previous configuration and changes only `seoImage` and
+its update timestamp. It verifies the event, preserves the remaining fields and
+does nothing on repeat runs. The initial seed uses the same image path. The
+existing frontend emits that URL in server-rendered `og:image` and `twitter:image`
+tags, with the matching JPEG type and 1200 × 630 dimensions. Deploy the frontend
+asset along with the event's SEO configuration when publishing this update.
+
+The screenshot was taken with Playwright after the envelope opened and fonts and
+hero images loaded. Only the capture browser used a landscape hero frame
+(1200 × 630, 40 px vertical padding and 24 px gaps); invitation CSS is unchanged.
+The screenshot disables animation and excludes the envelope, controls and other
+modules. No image generation or replacement artwork was used.
+
 ## Music
 
 `music_player` uses the uploaded `ELENA ROSE & Rawayana - Luna de Miel - ELENA ROSE.mp3`
@@ -67,7 +94,7 @@ It creates `mysprueba` with two explicitly named test guests. Re-running preserv
 - Exclusive deadline: 2026-11-19 00:00 America/Bogota (last permitted day: November 18).
 - Template: `wedding_oliva`.
 - Link printed by seed: `http://localhost:3002/invitacion/mysprueba/{principalId}`.
-- Share image served by the frontend: `/invitations/oliva/mayra-samuel-cover.png`.
+- Share image served by the frontend: `/invitations/oliva/mayra-samuel-hero-share-v1.jpg`.
 - Music is enabled; the photo slider remains disabled. The approved couple photo uses `simple_image` between the hero and invitation phrase.
 
 The seed sets the MySQL session timezone to -05:00 for TIMESTAMP writes. The backend connection uses the same session timezone and mysql2 decoder setting when reading.
