@@ -26,7 +26,9 @@ app.use(INVITATIONS_PUBLIC_PATH, express.static(path.resolve(INVITATIONS_DIR), {
 app.use(TEMPLATES_PUBLIC_PATH, express.static(path.resolve(TEMPLATES_DIR), { etag: false, maxAge: 0 }))
 
 const altezza = require('./routes/routesAltezza')
+const mobiliario = require('./routes/mobiliarioRoutes')
 app.use('/api/responseAltezza', altezza)
+app.use('/api/responseAltezza', mobiliario)
 
 app.get('/health', (req, res) => res.json({ ok: true }))
 

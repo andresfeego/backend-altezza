@@ -7,6 +7,11 @@ const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
 const sharp = require('sharp');
+const QRCode = require('qrcode');
+const { GetObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+const { getR2Client, getR2Config } = require('../r2Client');
+const shareGallery = require('../dbAltezza/shareGallery');
 const router = express.Router();
 // body parsing is handled at app level (server/index.js)
 
@@ -34,6 +39,24 @@ function publicEventoUrl(rutaRelativa) {
 
 
 const userEventStreams = new Map();
+const SHARE_GALLERY_COOKIE = 'share_gallery_visitor';
+const SHARE_GALLERY_MAX_FILES = 50;
+const SHARE_GALLERY_PHOTO_MAX_BYTES = 25 * 1024 * 1024;
+const SHARE_GALLERY_VIDEO_MAX_BYTES = 500 * 1024 * 1024;
+const SHARE_GALLERY_UPLOAD_EXPIRY_SECONDS = 10 * 60;
+const SHARE_GALLERY_READ_EXPIRY_SECONDS = 15 * 60;
+const SHARE_GALLERY_ALLOWED_IMAGE_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/heic',
+  'image/heif',
+  'image/webp',
+]);
+const SHARE_GALLERY_ALLOWED_VIDEO_TYPES = new Set([
+  'video/mp4',
+  'video/quicktime',
+  'video/webm',
+]);
 
 function parseOptionalPositiveInt(value) {
   if (value === null || value === undefined || value === '') return null;
@@ -85,6 +108,221 @@ function emitUserEvent(idUsuario, payload) {
       console.error('No fue posible emitir el evento SSE del usuario.', error);
     }
   });
+}
+
+function getFrontendBaseUrl(req) {
+  return (
+    process.env.SHARE_GALLERY_FRONTEND_BASE_URL
+    || process.env.SHARE_GALLERY_PUBLIC_BASE_URL
+    || `${req.protocol}://${req.get('host')}`
+  ).replace(/\/$/, '');
+}
+
+function getApiBaseUrl(req) {
+  const configuredBase = process.env.SHARE_GALLERY_API_BASE_URL;
+  if (configuredBase) return configuredBase.replace(/\/$/, '');
+  return '';
+}
+
+function parseCookies(req) {
+  const header = req.headers.cookie || '';
+  return header.split(';').reduce((acc, pair) => {
+    const index = pair.indexOf('=');
+    if (index === -1) return acc;
+    const key = pair.slice(0, index).trim();
+    const value = pair.slice(index + 1).trim();
+    if (!key) return acc;
+    acc[key] = decodeURIComponent(value);
+    return acc;
+  }, {});
+}
+
+function setVisitorCookie(req, res, visitorCode) {
+  const maxAge = shareGallery.VISITOR_TTL_DAYS * 24 * 60 * 60;
+  const secure = req.protocol === 'https' || process.env.NODE_ENV === 'production';
+  const parts = [
+    `${SHARE_GALLERY_COOKIE}=${encodeURIComponent(visitorCode)}`,
+    'Path=/',
+    'HttpOnly',
+    'SameSite=Lax',
+    `Max-Age=${maxAge}`,
+  ];
+
+  if (secure) parts.push('Secure');
+  res.setHeader('Set-Cookie', parts.join('; '));
+}
+
+function getCurrentVisitorCode(req) {
+  return parseCookies(req)[SHARE_GALLERY_COOKIE] || '';
+}
+
+function requireAdminRequest(req, res) {
+  const role = Number(req.headers['x-altezza-user-role'] || req.body?.currentUserRole || 0);
+  if (role !== 1) {
+    res.status(403).json({
+      error: 403,
+      message: 'Solo un usuario admin puede ejecutar esta accion.',
+    });
+    return null;
+  }
+
+  return {
+    idUsuario: Number(req.headers['x-altezza-user-id'] || req.body?.currentUserId || 0) || null,
+    role,
+  };
+}
+
+function sanitizeFilename(value) {
+  return String(value || 'archivo')
+    .replace(/[^\w.\- ()]/g, '')
+    .slice(0, 180) || 'archivo';
+}
+
+function getExtensionFromFile(file) {
+  const filename = sanitizeFilename(file.originalFilename || file.fileName || '');
+  const ext = path.extname(filename).replace('.', '').toLowerCase();
+  if (ext) return ext;
+
+  const map = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/heic': 'heic',
+    'image/heif': 'heif',
+    'image/webp': 'webp',
+    'video/mp4': 'mp4',
+    'video/quicktime': 'mov',
+    'video/webm': 'webm',
+  };
+  return map[file.mimeType] || 'bin';
+}
+
+function validateShareGalleryFile(file) {
+  const mimeType = String(file?.mimeType || '').toLowerCase();
+  const sizeBytes = Number(file?.sizeBytes || 0);
+  const isImage = SHARE_GALLERY_ALLOWED_IMAGE_TYPES.has(mimeType);
+  const isVideo = SHARE_GALLERY_ALLOWED_VIDEO_TYPES.has(mimeType);
+
+  if (!isImage && !isVideo) {
+    return { ok: false, message: `Tipo de archivo no permitido: ${mimeType || 'desconocido'}` };
+  }
+
+  const maxBytes = isImage ? SHARE_GALLERY_PHOTO_MAX_BYTES : SHARE_GALLERY_VIDEO_MAX_BYTES;
+  if (!Number.isFinite(sizeBytes) || sizeBytes <= 0 || sizeBytes > maxBytes) {
+    return {
+      ok: false,
+      message: isImage
+        ? 'Cada foto debe pesar maximo 25 MB.'
+        : 'Cada video debe pesar maximo 500 MB.',
+    };
+  }
+
+  return {
+    ok: true,
+    mediaType: isImage ? 'image' : 'video',
+    mimeType,
+  };
+}
+
+function buildUploadItems(album, files) {
+  if (!Array.isArray(files) || !files.length) {
+    const error = new Error('Se requiere al menos un archivo.');
+    error.status = 400;
+    throw error;
+  }
+
+  if (files.length > SHARE_GALLERY_MAX_FILES) {
+    const error = new Error(`Solo se permiten ${SHARE_GALLERY_MAX_FILES} archivos por lote.`);
+    error.status = 400;
+    throw error;
+  }
+
+  return files.map((file) => {
+    const validation = validateShareGalleryFile(file);
+    if (!validation.ok) {
+      const error = new Error(validation.message);
+      error.status = 400;
+      throw error;
+    }
+
+    const mediaPublicCode = shareGallery.randomCode(18);
+    const extension = getExtensionFromFile({ ...file, mimeType: validation.mimeType });
+    const r2KeyOriginal = `${album.r2Prefix}/originals/${mediaPublicCode}.${extension}`;
+    const r2KeyThumb = validation.mediaType === 'image' ? `${album.r2Prefix}/thumbs/${mediaPublicCode}.webp` : null;
+    const r2KeyPoster = validation.mediaType === 'video' ? `${album.r2Prefix}/posters/${mediaPublicCode}.webp` : null;
+
+    return {
+      mediaPublicCode,
+      mediaType: validation.mediaType,
+      mimeType: validation.mimeType,
+      originalFilename: sanitizeFilename(file.originalFilename || file.fileName),
+      sizeBytes: Number(file.sizeBytes || 0),
+      r2KeyOriginal,
+      r2KeyThumb,
+      r2KeyPoster,
+    };
+  });
+}
+
+async function signUploadItem(item) {
+  const r2 = getR2Client();
+  const { bucketName } = getR2Config();
+
+  const originalCommand = new PutObjectCommand({
+    Bucket: bucketName,
+    Key: item.r2KeyOriginal,
+    ContentType: item.mimeType,
+  });
+
+  const signed = {
+    original: {
+      key: item.r2KeyOriginal,
+      signedUrl: await getSignedUrl(r2, originalCommand, { expiresIn: SHARE_GALLERY_UPLOAD_EXPIRY_SECONDS }),
+      contentType: item.mimeType,
+    },
+  };
+
+  if (item.r2KeyThumb) {
+    const thumbCommand = new PutObjectCommand({
+      Bucket: bucketName,
+      Key: item.r2KeyThumb,
+      ContentType: 'image/webp',
+    });
+    signed.thumb = {
+      key: item.r2KeyThumb,
+      signedUrl: await getSignedUrl(r2, thumbCommand, { expiresIn: SHARE_GALLERY_UPLOAD_EXPIRY_SECONDS }),
+      contentType: 'image/webp',
+    };
+  }
+
+  if (item.r2KeyPoster) {
+    const posterCommand = new PutObjectCommand({
+      Bucket: bucketName,
+      Key: item.r2KeyPoster,
+      ContentType: 'image/webp',
+    });
+    signed.poster = {
+      key: item.r2KeyPoster,
+      signedUrl: await getSignedUrl(r2, posterCommand, { expiresIn: SHARE_GALLERY_UPLOAD_EXPIRY_SECONDS }),
+      contentType: 'image/webp',
+    };
+  }
+
+  return {
+    ...item,
+    upload: signed,
+    internalUrl: `/api/responseAltezza/public/share-gallery/media/${item.mediaPublicCode}`,
+  };
+}
+
+function keyBelongsToAlbum(album, key) {
+  return typeof key === 'string' && key.startsWith(`${album.r2Prefix}/`);
+}
+
+function uploadPayloadBelongsToAlbum(album, file) {
+  if (!file?.mediaPublicCode || !keyBelongsToAlbum(album, file.r2KeyOriginal)) return false;
+  if (file.r2KeyThumb && !keyBelongsToAlbum(album, file.r2KeyThumb)) return false;
+  if (file.r2KeyPoster && !keyBelongsToAlbum(album, file.r2KeyPoster)) return false;
+  return true;
 }
 
 function normalizeUsuarioPayload(user) {
@@ -244,6 +482,347 @@ router.post('/uploadImagenEvento', upload.single('imagen'), async (req, res) => 
   } catch (err) {
     console.error('[uploadImagenEvento] ❌', err);
     return res.sendStatus(500);
+  }
+});
+
+router.get('/eventos/:idEvento/fotos-compartidas/albums', async (req, res) => {
+  try {
+    const { idEvento } = req.params;
+    const evento = await general.eventoXid(String(idEvento || '').trim());
+    if (!evento?.length) {
+      return res.status(404).json({ error: 404, message: 'El evento no existe.' });
+    }
+
+    const albums = await shareGallery.listAlbumsByEvent(String(idEvento).trim(), getFrontendBaseUrl(req), getApiBaseUrl(req));
+    return res.status(200).json({ idEvento: String(idEvento).trim(), albums });
+  } catch (error) {
+    console.error('[share-gallery:list-albums]', error);
+    return res.status(500).json({ error: 500, message: 'No fue posible cargar los albumes.' });
+  }
+});
+
+router.post('/eventos/:idEvento/fotos-compartidas/albums', async (req, res) => {
+  try {
+    const adminUser = requireAdminRequest(req, res);
+    if (!adminUser) return null;
+
+    const { idEvento } = req.params;
+    const { nombre, descripcion, logoUrl } = req.body || {};
+    const cleanNombre = String(nombre || '').trim();
+    const cleanLogoUrl = String(logoUrl || '').trim();
+
+    if (!cleanNombre) {
+      return res.status(400).json({ error: 400, message: 'El nombre del album es obligatorio.' });
+    }
+
+    if (cleanLogoUrl && !/^https?:\/\/\S+$/i.test(cleanLogoUrl)) {
+      return res.status(400).json({ error: 400, message: 'La URL del logo debe iniciar con http:// o https://.' });
+    }
+
+    const evento = await general.eventoXid(String(idEvento || '').trim());
+    if (!evento?.length) {
+      return res.status(404).json({ error: 404, message: 'El evento no existe.' });
+    }
+
+    const album = await shareGallery.createAlbum({
+      idEvento: String(idEvento).trim(),
+      nombre: cleanNombre.slice(0, 140),
+      descripcion: String(descripcion || '').trim().slice(0, 1000) || null,
+      logoUrl: cleanLogoUrl.slice(0, 1000) || null,
+      createdBy: adminUser.idUsuario,
+      publicBaseUrl: getFrontendBaseUrl(req),
+      apiBaseUrl: getApiBaseUrl(req),
+    });
+
+    return res.status(201).json({ success: true, album });
+  } catch (error) {
+    console.error('[share-gallery:create-album]', error);
+    return res.status(error.status || 500).json({
+      error: error.status || 500,
+      message: error.message || 'No fue posible crear el album.',
+    });
+  }
+});
+
+router.get('/eventos/:idEvento/fotos-compartidas/albums/:albumId', async (req, res) => {
+  try {
+    const { idEvento, albumId } = req.params;
+    const album = await shareGallery.getAlbumById(Number(albumId), getFrontendBaseUrl(req), getApiBaseUrl(req));
+
+    if (!album || String(album.idEvento) !== String(idEvento)) {
+      return res.status(404).json({ error: 404, message: 'Album no encontrado.' });
+    }
+
+    const media = await shareGallery.listMedia({
+      albumId: album.id,
+      page: req.query.page,
+      pageSize: req.query.pageSize,
+    });
+
+    return res.status(200).json({ album, media });
+  } catch (error) {
+    console.error('[share-gallery:album-detail]', error);
+    return res.status(500).json({ error: 500, message: 'No fue posible cargar el album.' });
+  }
+});
+
+router.post('/eventos/:idEvento/fotos-compartidas/albums/:albumId/uploads/sign', async (req, res) => {
+  try {
+    const adminUser = requireAdminRequest(req, res);
+    if (!adminUser) return null;
+
+    const { idEvento, albumId } = req.params;
+    const album = await shareGallery.getAlbumById(Number(albumId), getFrontendBaseUrl(req), getApiBaseUrl(req));
+
+    if (!album || String(album.idEvento) !== String(idEvento)) {
+      return res.status(404).json({ error: 404, message: 'Album no encontrado.' });
+    }
+
+    const uploadItems = buildUploadItems(album, req.body?.files || []);
+    const signedItems = await Promise.all(uploadItems.map(signUploadItem));
+
+    return res.status(200).json({
+      albumId: album.id,
+      expiresIn: SHARE_GALLERY_UPLOAD_EXPIRY_SECONDS,
+      uploads: signedItems,
+    });
+  } catch (error) {
+    console.error('[share-gallery:admin-sign]', error);
+    return res.status(error.status || 500).json({
+      error: error.status || 500,
+      message: error.message || 'No fue posible preparar la subida.',
+    });
+  }
+});
+
+router.post('/eventos/:idEvento/fotos-compartidas/albums/:albumId/uploads/finalize', async (req, res) => {
+  try {
+    const adminUser = requireAdminRequest(req, res);
+    if (!adminUser) return null;
+
+    const { idEvento, albumId } = req.params;
+    const album = await shareGallery.getAlbumById(Number(albumId), getFrontendBaseUrl(req), getApiBaseUrl(req));
+
+    if (!album || String(album.idEvento) !== String(idEvento)) {
+      return res.status(404).json({ error: 404, message: 'Album no encontrado.' });
+    }
+
+    const visitor = await shareGallery.ensureVisitor({
+      visitorCode: getCurrentVisitorCode(req),
+      displayName: req.body?.uploaderName || 'Equipo Altezza',
+    });
+    setVisitorCookie(req, res, visitor.publicCode);
+
+    const files = Array.isArray(req.body?.files) ? req.body.files : [];
+    const created = [];
+
+    for (const file of files) {
+      if (!uploadPayloadBelongsToAlbum(album, file)) {
+        return res.status(400).json({ error: 400, message: 'La metadata de subida no pertenece al album.' });
+      }
+
+      created.push(await shareGallery.createMediaRecord({
+        album,
+        visitor,
+        payload: file,
+      }));
+    }
+
+    return res.status(201).json({ success: true, media: created });
+  } catch (error) {
+    console.error('[share-gallery:admin-finalize]', error);
+    return res.status(error.status || 500).json({
+      error: error.status || 500,
+      message: error.message || 'No fue posible registrar los archivos.',
+    });
+  }
+});
+
+router.get('/public/share-gallery/:albumPublicCode', async (req, res) => {
+  try {
+    const { albumPublicCode } = req.params;
+    const album = await shareGallery.getAlbumByPublicCode(albumPublicCode, getFrontendBaseUrl(req), getApiBaseUrl(req));
+
+    if (!album || album.estado !== 'activo') {
+      return res.status(404).json({ error: 404, message: 'Album no encontrado.' });
+    }
+
+    const currentVisitor = await shareGallery.ensureVisitor({
+      visitorCode: getCurrentVisitorCode(req),
+    });
+    setVisitorCookie(req, res, currentVisitor.publicCode);
+
+    const mine = await shareGallery.listMedia({
+      albumId: album.id,
+      visitorId: currentVisitor.id,
+      page: 1,
+      pageSize: 12,
+      mineOnly: true,
+    });
+
+    const media = await shareGallery.listMedia({
+      albumId: album.id,
+      visitorId: currentVisitor.id,
+      page: req.query.page,
+      pageSize: req.query.pageSize,
+    });
+
+    return res.status(200).json({
+      album,
+      visitor: {
+        publicCode: currentVisitor.publicCode,
+        displayName: currentVisitor.displayName,
+      },
+      mine,
+      media,
+    });
+  } catch (error) {
+    console.error('[share-gallery:public-detail]', error);
+    return res.status(500).json({ error: 500, message: 'No fue posible cargar la galeria.' });
+  }
+});
+
+router.get('/public/share-gallery/:albumPublicCode/qr.svg', async (req, res) => {
+  try {
+    const { albumPublicCode } = req.params;
+    const album = await shareGallery.getAlbumByPublicCode(albumPublicCode, getFrontendBaseUrl(req), getApiBaseUrl(req));
+
+    if (!album || album.estado !== 'activo') {
+      return res.status(404).send('Album no encontrado.');
+    }
+
+    const svg = await QRCode.toString(album.publicUrl, {
+      type: 'svg',
+      margin: 1,
+      width: 720,
+      color: {
+        dark: '#2f2529',
+        light: '#ffffff',
+      },
+    });
+
+    res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    return res.status(200).send(svg);
+  } catch (error) {
+    console.error('[share-gallery:qr]', error);
+    return res.status(500).send('No fue posible generar el QR.');
+  }
+});
+
+router.post('/public/share-gallery/:albumPublicCode/uploads/sign', async (req, res) => {
+  try {
+    const { albumPublicCode } = req.params;
+    const album = await shareGallery.getAlbumByPublicCode(albumPublicCode, getFrontendBaseUrl(req), getApiBaseUrl(req));
+
+    if (!album || album.estado !== 'activo') {
+      return res.status(404).json({ error: 404, message: 'Album no encontrado.' });
+    }
+
+    const visitor = await shareGallery.ensureVisitor({
+      visitorCode: getCurrentVisitorCode(req),
+      displayName: req.body?.uploaderName,
+    });
+    setVisitorCookie(req, res, visitor.publicCode);
+
+    const uploadItems = buildUploadItems(album, req.body?.files || []);
+    const signedItems = await Promise.all(uploadItems.map(signUploadItem));
+
+    return res.status(200).json({
+      albumId: album.id,
+      visitor: {
+        publicCode: visitor.publicCode,
+        displayName: visitor.displayName,
+      },
+      expiresIn: SHARE_GALLERY_UPLOAD_EXPIRY_SECONDS,
+      uploads: signedItems,
+    });
+  } catch (error) {
+    console.error('[share-gallery:public-sign]', error);
+    return res.status(error.status || 500).json({
+      error: error.status || 500,
+      message: error.message || 'No fue posible preparar la subida.',
+    });
+  }
+});
+
+router.post('/public/share-gallery/:albumPublicCode/uploads/finalize', async (req, res) => {
+  try {
+    const { albumPublicCode } = req.params;
+    const album = await shareGallery.getAlbumByPublicCode(albumPublicCode, getFrontendBaseUrl(req), getApiBaseUrl(req));
+
+    if (!album || album.estado !== 'activo') {
+      return res.status(404).json({ error: 404, message: 'Album no encontrado.' });
+    }
+
+    const visitor = await shareGallery.ensureVisitor({
+      visitorCode: getCurrentVisitorCode(req),
+      displayName: req.body?.uploaderName,
+    });
+    setVisitorCookie(req, res, visitor.publicCode);
+
+    const files = Array.isArray(req.body?.files) ? req.body.files : [];
+    if (!files.length) {
+      return res.status(400).json({ error: 400, message: 'No se recibieron archivos para registrar.' });
+    }
+
+    const created = [];
+
+    for (const file of files) {
+      if (!uploadPayloadBelongsToAlbum(album, file)) {
+        return res.status(400).json({ error: 400, message: 'La metadata de subida no pertenece al album.' });
+      }
+
+      created.push(await shareGallery.createMediaRecord({
+        album,
+        visitor,
+        payload: {
+          ...file,
+          uploaderName: req.body?.uploaderName || file.uploaderName,
+        },
+      }));
+    }
+
+    return res.status(201).json({ success: true, media: created });
+  } catch (error) {
+    console.error('[share-gallery:public-finalize]', error);
+    return res.status(error.status || 500).json({
+      error: error.status || 500,
+      message: error.message || 'No fue posible registrar los archivos.',
+    });
+  }
+});
+
+router.get('/public/share-gallery/media/:mediaPublicCode', async (req, res) => {
+  try {
+    const media = await shareGallery.getMediaByPublicCode(req.params.mediaPublicCode);
+
+    if (!media || media.status !== 'activo' || media.albumEstado !== 'activo') {
+      return res.status(404).json({ error: 404, message: 'Archivo no encontrado.' });
+    }
+
+    const variant = String(req.query.variant || 'original');
+    const key = variant === 'thumb' && media.r2KeyThumb
+      ? media.r2KeyThumb
+      : variant === 'poster' && media.r2KeyPoster
+        ? media.r2KeyPoster
+        : media.r2KeyOriginal;
+
+    const r2 = getR2Client();
+    const { bucketName } = getR2Config();
+    const command = new GetObjectCommand({
+      Bucket: bucketName,
+      Key: key,
+    });
+    const signedUrl = await getSignedUrl(r2, command, { expiresIn: SHARE_GALLERY_READ_EXPIRY_SECONDS });
+
+    return res.redirect(302, signedUrl);
+  } catch (error) {
+    console.error('[share-gallery:media]', error);
+    return res.status(error.status || 500).json({
+      error: error.status || 500,
+      message: error.message || 'No fue posible abrir el archivo.',
+    });
   }
 });
 
@@ -754,8 +1333,12 @@ router.put('/public/invitaciones/:idInvitacion/confirmacion', async (req, res) =
     const payload = await general.confirmarInvitacionPublica(req.params.idInvitacion, respuestas);
     return res.status(200).json(payload);
   } catch (e) {
+    if (e === 409) {
+      return res.status(409).json({ error: 409, message: 'El plazo para confirmar asistencia ha finalizado.' });
+    }
+
     if (e === 400) {
-      return res.status(400).json({ error: 400, message: 'Debes enviar al menos una respuesta valida.' });
+      return res.status(400).json({ error: 400, message: 'Envía respuestas válidas, sin integrantes repetidos.' });
     }
 
     if (e === 404) {
