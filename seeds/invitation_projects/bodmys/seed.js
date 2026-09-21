@@ -1,6 +1,7 @@
 /** Local-only, repeatable data provisioning; no schema changes. */
 const path = require('node:path');
 const fs = require('node:fs');
+const { SEO_IMAGE } = require('./configure-share-image');
 require('dotenv').config({ path: path.resolve(__dirname, '../../../.env'), quiet: true });
 const mysql = require('mysql2/promise');
 
@@ -42,7 +43,7 @@ async function seed() {
     await db.query(`INSERT INTO evento_invitacion_publica (idEvento, templateKey, seoTitle, seoDescription, seoImage, published, modulesJson)
       VALUES (?, 'wedding_oliva', ?, ?, ?, 0, ?)
       ON DUPLICATE KEY UPDATE templateKey=VALUES(templateKey), seoTitle=VALUES(seoTitle), seoDescription=VALUES(seoDescription), seoImage=VALUES(seoImage), modulesJson=VALUES(modulesJson), updatedAt=CURRENT_TIMESTAMP`,
-      [eventId, 'Mayra y Samuel | Nuestra boda', '28 de noviembre de 2026 · Acompáñanos a celebrar nuestra boda.', '/invitations/oliva/mayra-samuel-cover.png', JSON.stringify(modules)]);
+      [eventId, 'Mayra y Samuel | Nuestra boda', '28 de noviembre de 2026 · Acompáñanos a celebrar nuestra boda.', SEO_IMAGE, JSON.stringify(modules)]);
     const [priorInvitation] = await db.query('SELECT id FROM invitacion WHERE id = ?', [invitationId]);
     if (priorInvitation.length) {
       const [owners] = await db.query('SELECT idEvento FROM evento_has_invitacion WHERE idInvitacion = ?', [invitationId]);
