@@ -254,12 +254,34 @@
     }
   },
   {
-    "type": "music_player",
-    "enabled": false,
-    "order": 13,
+    "type": "instant_photos",
+    "enabled": true,
     "config": {
-      "audioSrc": "",
+      "images": [
+        {
+          "imageSrc": "/scrAppaltezza/invitations/bodmys/photos/003.jpeg",
+          "imageAlt": "Mayra y Samuel juntos"
+        },
+        {
+          "imageSrc": "/scrAppaltezza/invitations/bodmys/photos/004.jpeg",
+          "imageAlt": "Mayra y Samuel abrazados"
+        }
+      ],
+      "sealImageSrc": "/scrAppaltezza/invitations/bodmys/instant_photos/sello-lacre-MS-v1.webp",
+      "sealImageAlt": "Sello dorado con el monograma de Mayra y Samuel",
+      "message": "Con mucho cariño,\nMayra & Samuel",
+      "reliefImageSrc": "/scrAppaltezza/invitations/bodmys/hero/floral-relief-v1.png"
+    },
+    "order": 13
+  },
+  {
+    "type": "music_player",
+    "enabled": true,
+    "order": 14,
+    "config": {
+      "audioSrc": "/scrAppaltezza/invitations/bodmys/audio/ELENA%20ROSE%20%26%20Rawayana%20-%20Luna%20de%20Miel%20-%20ELENA%20ROSE.mp3",
       "title": "Nuestra canción",
+      "trackLabel": "Luna de Miel — ELENA ROSE & Rawayana",
       "autoplay": false,
       "initiallyMuted": true
     }
@@ -267,17 +289,18 @@
   {
     "type": "photo_slider",
     "enabled": false,
-    "order": 14,
+    "order": 15,
     "config": {
       "images": []
     }
   },
   {
     "type": "closing_message",
-    "enabled": true,
+    "enabled": false,
     "config": {
-      "message": "Con mucho cariño,\nMayra & Samuel"
+      "message": "Con mucho cariño,\nMayra & Samuel",
+      "showFrame": false
     },
-    "order": 15
+    "order": 16
   }
 ]

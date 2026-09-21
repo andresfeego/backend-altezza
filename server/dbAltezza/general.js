@@ -36,6 +36,7 @@ const INVITATION_MODULE_TYPE_CATALOG = new Set([
   'closing_message',
   'welcome_message',
   'photo_slider',
+  'instant_photos',
   'image_slider_sepia',
   'music_player',
   'countdown',

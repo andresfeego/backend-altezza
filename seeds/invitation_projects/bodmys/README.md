@@ -1,5 +1,38 @@
 # Mayra & Samuel — Oliva (local)
 
+## Music
+
+`music_player` uses the uploaded `ELENA ROSE & Rawayana - Luna de Miel - ELENA ROSE.mp3`
+from `_local_storage/invitations/bodmys/audio/`. The URL encodes spaces and the
+ampersand and stays on the invitation's origin. The Oliva envelope starts the song
+with sound when opened; the floating music control toggles mute. Playback loops.
+
+```sh
+node seeds/invitation_projects/bodmys/configure-music.js
+```
+
+This local-only update enables the existing module and sets its audio and track
+label, preserving all other modules and playback settings. It backs up the saved
+JSON and refuses to replace a different song. The preview gateway allows this file.
+
+## Photo keepsake and closing message
+
+`instant_photos` follows RSVP and holds the two original photos, the MS wax seal,
+optional `message` and optional `reliefImageSrc`. Oliva uses the hero's botanical
+mask with its own beige paper tone, scoped to the complete photo/message section.
+
+After the photo module exists, run:
+
+```sh
+node seeds/invitation_projects/bodmys/merge-closing-into-photos.js
+```
+
+This local-only transactional migration copies the saved closing text verbatim
+into the photos, copies the hero's relief image path and disables `closing_message`
+without discarding its configuration. It preserves ordering, photos, seal and
+all unrelated modules; it backs up the previous JSON and does not overwrite later
+edits on repeat runs. Fresh seeds already contain the merged configuration.
+
 ## Envelope video
 
 The uploaded `Quiero_un_video_de_segundos.mp4` now lives at
@@ -35,7 +68,7 @@ It creates `mysprueba` with two explicitly named test guests. Re-running preserv
 - Template: `wedding_oliva`.
 - Link printed by seed: `http://localhost:3002/invitacion/mysprueba/{principalId}`.
 - Share image served by the frontend: `/invitations/oliva/mayra-samuel-cover.png`.
-- Music and photo slider remain disabled; the approved couple photo uses `simple_image` between the hero and invitation phrase.
+- Music is enabled; the photo slider remains disabled. The approved couple photo uses `simple_image` between the hero and invitation phrase.
 
 The seed sets the MySQL session timezone to -05:00 for TIMESTAMP writes. The backend connection uses the same session timezone and mysql2 decoder setting when reading.
 
