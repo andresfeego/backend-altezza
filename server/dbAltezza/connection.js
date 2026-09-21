@@ -13,4 +13,12 @@ const pool = mysql.createPool({
   timezone: process.env.ALTEZZA_DB_TIMEZONE || '-05:00',
 });
 
+// TIMESTAMP columns use the MySQL session timezone, whereas DATETIME does not.
+// Match it to mysql2's decoder so confirmation deadlines are not shifted twice.
+pool.on('connection', (connection) => {
+  connection.query('SET time_zone = ?', [process.env.ALTEZZA_DB_TIMEZONE || '-05:00'], (error) => {
+    if (error) connection.destroy();
+  });
+});
+
 module.exports = pool;
