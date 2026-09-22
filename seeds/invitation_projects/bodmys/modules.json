@@ -6,11 +6,11 @@
     "config": {
       "brideName": "Mayra",
       "groomName": "Samuel",
-      "backgroundSrc": "/scrAppaltezza/invitations/bodmys/cover/fondo01portrait.png",
-      "backgroundDesktopSrc": "/scrAppaltezza/invitations/bodmys/cover/fondo01wide.png",
-      "backgroundVideoSrc": "/scrAppaltezza/invitations/bodmys/cover/fondo-sobre-loop.mp4",
-      "envelopeSrc": "/scrAppaltezza/invitations/bodmys/cover/sobre-cerrado-sin-fondo.png",
-      "monogramSrc": "/scrAppaltezza/invitations/bodmys/cover/monograma-MS-transparente.png"
+      "backgroundSrc": "/scrAppaltezza/invitations/bodmys/cover/fondo01portrait-web-v1.webp",
+      "backgroundDesktopSrc": "/scrAppaltezza/invitations/bodmys/cover/fondo01wide-web-v1.webp",
+      "backgroundVideoSrc": "/scrAppaltezza/invitations/bodmys/cover/fondo-sobre-loop-web-v1.mp4",
+      "envelopeSrc": "/scrAppaltezza/invitations/bodmys/cover/sobre-cerrado-sin-fondo-web-v1.webp",
+      "monogramSrc": "/scrAppaltezza/invitations/bodmys/cover/monograma-MS-transparente-web-v1.webp"
     }
   },
   {
@@ -19,15 +19,15 @@
     "order": 2,
     "config": {
       "text1": "Nos casamos",
-      "backgroundImage": "/scrAppaltezza/invitations/bodmys/hero/floral-relief-v1.png",
-      "logoImage": "/scrAppaltezza/invitations/bodmys/cover/monograma-MS-transparente.png"
+      "backgroundImage": "/scrAppaltezza/invitations/bodmys/hero/floral-relief-v1-web-v1.webp",
+      "logoImage": "/scrAppaltezza/invitations/bodmys/cover/monograma-MS-transparente-web-v1.webp"
     }
   },
   {
     "type": "simple_image",
     "enabled": true,
     "config": {
-      "imageSrc": "/scrAppaltezza/invitations/bodmys/photos/mayra-samuel-fondo-desenfocado.webp",
+      "imageSrc": "/scrAppaltezza/invitations/bodmys/photos/mayra-samuel-fondo-desenfocado-web-v1.webp",
       "alt": "Mayra y Samuel juntos"
     },
     "order": 3
@@ -69,7 +69,7 @@
       "brideName": "Mayra",
       "groomName": "Samuel",
       "sectionBackground": {
-        "imageSrc": "/scrAppaltezza/invitations/bodmys/couple_names/jardin-luz-natural-v1.png",
+        "imageSrc": "/scrAppaltezza/invitations/bodmys/couple_names/jardin-luz-natural-v1-web-v1.webp",
         "overlayOpacity": 0.1
       }
     },
@@ -117,7 +117,7 @@
     "config": {
       "title": "Lluvia de sobres",
       "leadText": "Tu presencia es nuestro mejor regalo; si deseas obsequiarnos algo, agradeceremos mucho tu aporte en lluvia de sobres.",
-      "imageSrc": "/scrAppaltezza/invitations/bodmys/gift_envelopes/sobre-botanico-v1.png",
+      "imageSrc": "/scrAppaltezza/invitations/bodmys/gift_envelopes/sobre-botanico-v1-web-v1.webp",
       "imageAlt": "Sobre beige con sello botánico verde"
     },
     "order": 10
@@ -129,13 +129,13 @@
       "title": "Código de vestimenta",
       "attireLabel": "Garden Elegance",
       "message": "Un estilo elegante y fresco, pensado para disfrutar de una celebración al aire libre.\n\nPor tratarse de una celebración en jardín, recomendamos llevar un abrigo, chal o pieza adicional para disfrutar cómodamente de la noche.",
-      "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/grupo-vestidos-acuarela-v1.png",
+      "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/grupo-vestidos-acuarela-v1-web-v1.webp",
       "imageAlt": "Ilustración en acuarela de nueve mujeres con ramos; la novia de blanco al centro y sus acompañantes en tonos verdes y terracota.",
       "suggestedColorsTitle": "Tonos sugeridos",
       "avoidedColorsTitle": "Evita blanco, marfil y beige",
       "suggestedColors": [
         {
-          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1.png",
+          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1-web-v1.webp",
           "label": "Verde pizarra",
           "crop": {
             "x": 1.219512,
@@ -145,7 +145,7 @@
           }
         },
         {
-          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1.png",
+          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1-web-v1.webp",
           "label": "Salvia claro",
           "crop": {
             "x": 12.330623,
@@ -155,7 +155,7 @@
           }
         },
         {
-          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1.png",
+          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1-web-v1.webp",
           "label": "Terracota",
           "crop": {
             "x": 23.712737,
@@ -165,7 +165,7 @@
           }
         },
         {
-          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1.png",
+          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1-web-v1.webp",
           "label": "Oliva",
           "crop": {
             "x": 35.298103,
@@ -175,7 +175,7 @@
           }
         },
         {
-          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1.png",
+          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1-web-v1.webp",
           "label": "Canela",
           "crop": {
             "x": 58.265583,
@@ -185,7 +185,7 @@
           }
         },
         {
-          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1.png",
+          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1-web-v1.webp",
           "label": "Terracota rojizo",
           "crop": {
             "x": 69.783198,
@@ -195,7 +195,7 @@
           }
         },
         {
-          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1.png",
+          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1-web-v1.webp",
           "label": "Salvia grisáceo",
           "crop": {
             "x": 81.707317,
@@ -205,7 +205,7 @@
           }
         },
         {
-          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1.png",
+          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1-web-v1.webp",
           "label": "Verde bosque",
           "crop": {
             "x": 92.682927,
@@ -217,7 +217,7 @@
       ],
       "avoidedColors": [
         {
-          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1.png",
+          "imageSrc": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1-web-v1.webp",
           "label": "Blanco",
           "crop": {
             "x": 46.680217,
@@ -270,7 +270,7 @@
       "sealImageSrc": "/scrAppaltezza/invitations/bodmys/instant_photos/sello-lacre-MS-v1.webp",
       "sealImageAlt": "Sello dorado con el monograma de Mayra y Samuel",
       "message": "Con mucho cariño,\nMayra & Samuel",
-      "reliefImageSrc": "/scrAppaltezza/invitations/bodmys/hero/floral-relief-v1.png"
+      "reliefImageSrc": "/scrAppaltezza/invitations/bodmys/hero/floral-relief-v1-web-v1.webp"
     },
     "order": 13
   },
@@ -279,7 +279,7 @@
     "enabled": true,
     "order": 14,
     "config": {
-      "audioSrc": "/scrAppaltezza/invitations/bodmys/audio/ELENA%20ROSE%20%26%20Rawayana%20-%20Luna%20de%20Miel%20-%20ELENA%20ROSE.mp3",
+      "audioSrc": "/scrAppaltezza/invitations/bodmys/audio/ELENA%20ROSE%20%26%20Rawayana%20-%20Luna%20de%20Miel%20-%20ELENA%20ROSE-web-v1.mp3",
       "title": "Nuestra canción",
       "trackLabel": "Luna de Miel — ELENA ROSE & Rawayana",
       "autoplay": false,
