@@ -29,8 +29,10 @@ modules. No image generation or replacement artwork was used.
 
 ## Music
 
-`music_player` uses the uploaded `ELENA ROSE & Rawayana - Luna de Miel - ELENA ROSE.mp3`
-from `_local_storage/invitations/bodmys/audio/`. The URL encodes spaces and the
+`music_player` uses the 160 kb/s derivative
+`ELENA ROSE & Rawayana - Luna de Miel - ELENA ROSE-web-v1.mp3` from
+`_local_storage/invitations/bodmys/audio/`. The uploaded file without `-web-v1`
+remains intact. The URL encodes spaces and the
 ampersand and stays on the invitation's origin. The Oliva envelope starts the song
 with sound when opened; the floating music control toggles mute. Playback loops.
 
@@ -64,7 +66,9 @@ edits on repeat runs. Fresh seeds already contain the merged configuration.
 
 The uploaded `Quiero_un_video_de_segundos.mp4` now lives at
 `_local_storage/invitations/bodmys/cover/fondo-sobre-loop.mp4` (720 × 1280, about
-10 seconds). This is event media, not a template asset. To apply only this change
+20 seconds). The active derivative is `fondo-sobre-loop-web-v1.mp4`, H.264 CRF 24,
+same dimensions and duration, without the unused sound track. The original is
+retained. This is event media, not a template asset. To apply the original setup
 to an existing local event, after placing the file:
 
 ```sh
@@ -76,6 +80,61 @@ the previous JSON and only adds `envelop_intro.config.backgroundVideoSrc`.
 Existing portrait/desktop images, copy, order and other modules are preserved.
 It is safe to repeat. Clear `backgroundVideoSrc` in the saved config to return
 to image-only mode; all three frontend templates support both media types.
+
+## Media optimization — September 22, 2026
+
+The local event and seed now reference versioned derivatives from
+[`media-optimized.json`](media-optimized.json). Its 21 entries contain original
+and derivative paths, byte counts, SHA-256 hashes and profiles. Total inventory:
+52,720,686 → 13,258,148 bytes (74.85% less); images 32,348,684 → 4,181,985,
+video 11,738,608 → 4,758,519, music 8,633,394 → 4,317,644. This includes both
+responsive backgrounds, so it is an inventory total, not page transfer size.
+
+`optimize-media.js` prepares derivatives with Sharp and FFmpeg before changing
+configuration. It backs up every source before the first conversion, verifies
+the copies by hash, and never overwrites originals or existing derivatives.
+Small JPEG/WebP files already optimized stay unchanged. Photo/illustration WebP
+uses quality 90 with alpha quality 100; masks and monogram use lossless WebP.
+The 6000 × 4000 couple photo becomes 1600 × 1067; remaining image dimensions
+are preserved. All transformed alpha channels were checked pixel for pixel.
+Video uses libx264 slow/CRF 24/yuv420p/faststart, retaining 720 × 1280 and 24 fps;
+music uses libmp3lame at 160 kb/s and retains the complete song. The video and
+audio derivatives passed a full FFmpeg decode check.
+
+```sh
+# Requires FFmpeg (or an absolute FFMPEG_BIN) and the existing Sharp dependency.
+FFMPEG_BIN=/path/to/ffmpeg node seeds/invitation_projects/bodmys/optimize-media.js --prepare
+node seeds/invitation_projects/bodmys/optimize-media.js --apply
+node --test tests/bodmys-media-optimization.test.js
+```
+
+With the manifest already present, `--prepare` verifies its originals and
+derivatives instead of recompressing. `--apply` verifies every file, targets only
+the local Mayra/Samuel event and transactionally replaces matching media URLs in
+`modulesJson`, preserving copy, order, dates, guests and answers. It also updates
+the seed URLs; rerunning is a no-op for the event. It does not replay older
+configuration migrations or reset the whole event.
+
+Local backups, outside the public invitations directory:
+
+- `_local_storage/_backups/bodmys-media-20260922-axage0/`: every source, original
+  seed, hashes and derivative manifest. `storage/` and `frontend/` retain paths.
+- `_local_storage/_backups/bodmys-media-config-5O9yNA/event-before.json`: event
+  configuration immediately before applying the optimized URLs.
+
+Original paths remain available for rollback; restoring their URLs is sufficient
+to use them again. Do not overwrite a newer event configuration with the backup
+without checking later edits. For another environment, copy the storage originals
+and derivatives listed in the manifest, deploy the four new frontend assets, and
+apply the reviewed URL changes there through its normal deployment process.
+Storage and backups are intentionally ignored by Git; pushing code alone does
+not upload them. The local Oliva gateway explicitly permits the new derivative
+paths. The frontend must be rebuilt before verifying the optimized preview.
+
+Manual checks: open with empty cache, delay the envelope/video/dress palette/music
+separately, confirm the loading layer remains until prepared, simulate a failed
+download and retry, then inspect the full invitation in Chrome/WebKit and via the
+tunnel. No RSVP submission is needed for these checks.
 
 ## Initial seed
 
@@ -186,8 +245,10 @@ Event media under `_local_storage/invitations/bodmys/photos/`:
 
 - Original: `DSC_0044 - copia.JPG` (untouched).
 - Approved background-blur master: `mayra-samuel-fondo-desenfocado.png`.
-- Display asset: `mayra-samuel-fondo-desenfocado.webp`, lossless, 6000 × 4000,
+- Preserved full-resolution asset: `mayra-samuel-fondo-desenfocado.webp`, lossless, 6000 × 4000,
   8,410,876 bytes. Decoded RGB pixels were compared with the PNG and are identical.
+- Current display derivative: `mayra-samuel-fondo-desenfocado-web-v1.webp`,
+  1600 × 1067, quality 90, 92,264 bytes. The master and full-resolution asset remain intact.
 
 Deploy the WebP with the event assets; storage is ignored by Git. No template
 component or shared data contract changes are needed. The local tunnel gateway

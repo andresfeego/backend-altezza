@@ -1,0 +1,314 @@
+{
+  "version": 1,
+  "eventId": "bodmys",
+  "assets": [
+    {
+      "root": "storage",
+      "original": "bodmys/cover/fondo01portrait.png",
+      "url": "/scrAppaltezza/invitations/bodmys/cover/fondo01portrait.png",
+      "originalBytes": 2399302,
+      "originalSha256": "d79bc648912e4dc07a0e08ade04fd032e40edfdeae196153053879de363ef8bc",
+      "optimized": "bodmys/cover/fondo01portrait-web-v1.webp",
+      "dimensions": [
+        941,
+        1672
+      ],
+      "profile": "webp-q90",
+      "optimizedBytes": 252690,
+      "optimizedSha256": "e49c0c1a50fd3b56e037842cdf843f9dc31cc05e7b8e724dd9ec64678e81f8df",
+      "optimizedUrl": "/scrAppaltezza/invitations/bodmys/cover/fondo01portrait-web-v1.webp"
+    },
+    {
+      "root": "storage",
+      "original": "bodmys/cover/fondo01wide.png",
+      "url": "/scrAppaltezza/invitations/bodmys/cover/fondo01wide.png",
+      "originalBytes": 2533279,
+      "originalSha256": "555280bf4228a3b5960cd2c7d7a28ecb69d3c273569e748b67cf4b16960e2b49",
+      "optimized": "bodmys/cover/fondo01wide-web-v1.webp",
+      "dimensions": [
+        1672,
+        941
+      ],
+      "profile": "webp-q90",
+      "optimizedBytes": 270026,
+      "optimizedSha256": "ba1ce6221050b4bf751ce81aaa3a83a429da7edaf416aa5e2907354079559004",
+      "optimizedUrl": "/scrAppaltezza/invitations/bodmys/cover/fondo01wide-web-v1.webp"
+    },
+    {
+      "root": "storage",
+      "original": "bodmys/cover/fondo-sobre-loop.mp4",
+      "url": "/scrAppaltezza/invitations/bodmys/cover/fondo-sobre-loop.mp4",
+      "originalBytes": 11738608,
+      "originalSha256": "f0fda6ebddfbdb903be5b6d3f1e35aa6b9553c2401feca18aaa341944e64939f",
+      "optimized": "bodmys/cover/fondo-sobre-loop-web-v1.mp4",
+      "profile": "h264-crf24-slow-no-audio-faststart",
+      "optimizedBytes": 4758519,
+      "optimizedSha256": "fc1000ed736b88c5f98f0e8cceecf14f64949d2aad50f96e9a77b2a8bdf01364",
+      "optimizedUrl": "/scrAppaltezza/invitations/bodmys/cover/fondo-sobre-loop-web-v1.mp4"
+    },
+    {
+      "root": "storage",
+      "original": "bodmys/cover/sobre-cerrado-sin-fondo.png",
+      "url": "/scrAppaltezza/invitations/bodmys/cover/sobre-cerrado-sin-fondo.png",
+      "originalBytes": 1861259,
+      "originalSha256": "7d1813b22a8524ddf59687e1d83c0cda0aad8fccd7eea1c41a31c6fa2ffedcdc",
+      "optimized": "bodmys/cover/sobre-cerrado-sin-fondo-web-v1.webp",
+      "alphaUnchanged": true,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "profile": "webp-q90",
+      "optimizedBytes": 249930,
+      "optimizedSha256": "ff0fe91fb16050ac0f050f8cfe9965cd9e7c06c29d014b5b8da8fa6d396022ba",
+      "optimizedUrl": "/scrAppaltezza/invitations/bodmys/cover/sobre-cerrado-sin-fondo-web-v1.webp"
+    },
+    {
+      "root": "storage",
+      "original": "bodmys/cover/monograma-MS-transparente.png",
+      "url": "/scrAppaltezza/invitations/bodmys/cover/monograma-MS-transparente.png",
+      "originalBytes": 91791,
+      "originalSha256": "4a6ef48bb7459675b3040d3c76b19cfc3daeef8e996ec75061f10342fbad96fc",
+      "optimized": "bodmys/cover/monograma-MS-transparente-web-v1.webp",
+      "alphaUnchanged": true,
+      "dimensions": [
+        1088,
+        1445
+      ],
+      "profile": "webp-lossless",
+      "optimizedBytes": 35924,
+      "optimizedSha256": "91f74592a4846d4a99db44cf381f278bcc03b7f754dab800f85a756742c7f871",
+      "optimizedUrl": "/scrAppaltezza/invitations/bodmys/cover/monograma-MS-transparente-web-v1.webp"
+    },
+    {
+      "root": "storage",
+      "original": "bodmys/hero/floral-relief-v1.png",
+      "url": "/scrAppaltezza/invitations/bodmys/hero/floral-relief-v1.png",
+      "originalBytes": 1692551,
+      "originalSha256": "2e4477d74db5217e71d4e01696fab31acdcf936ab6fa54044fe706046d9f03bf",
+      "optimized": "bodmys/hero/floral-relief-v1-web-v1.webp",
+      "alphaUnchanged": true,
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "profile": "webp-lossless",
+      "optimizedBytes": 678856,
+      "optimizedSha256": "1c370f8fbe3ba927b1309d2050b5248b0ba83e2258d5c92356668ae36274ae3d",
+      "optimizedUrl": "/scrAppaltezza/invitations/bodmys/hero/floral-relief-v1-web-v1.webp"
+    },
+    {
+      "root": "storage",
+      "original": "bodmys/photos/mayra-samuel-fondo-desenfocado.webp",
+      "url": "/scrAppaltezza/invitations/bodmys/photos/mayra-samuel-fondo-desenfocado.webp",
+      "originalBytes": 8410876,
+      "originalSha256": "659440b4c609c318577a94fa54490d7f706352b55b3fd714287944411216fef5",
+      "optimized": "bodmys/photos/mayra-samuel-fondo-desenfocado-web-v1.webp",
+      "dimensions": [
+        1600,
+        1067
+      ],
+      "profile": "webp-q90",
+      "optimizedBytes": 92264,
+      "optimizedSha256": "6c5519e6a15843beb7e39fa5c9466a4a1c0621b5e428d2fda525bd47c6bedf06",
+      "optimizedUrl": "/scrAppaltezza/invitations/bodmys/photos/mayra-samuel-fondo-desenfocado-web-v1.webp"
+    },
+    {
+      "root": "storage",
+      "original": "bodmys/couple_names/jardin-luz-natural-v1.png",
+      "url": "/scrAppaltezza/invitations/bodmys/couple_names/jardin-luz-natural-v1.png",
+      "originalBytes": 2575414,
+      "originalSha256": "13ccc082ed82a64abeefe763a8cc1a8d1cc3ba0911f3fceb5f5a9c0909e528a9",
+      "optimized": "bodmys/couple_names/jardin-luz-natural-v1-web-v1.webp",
+      "dimensions": [
+        1064,
+        1600
+      ],
+      "profile": "webp-q90",
+      "optimizedBytes": 291296,
+      "optimizedSha256": "8e41e2afad9886d17538af9ce69b1a4bfdd21ce49323b2b63107273df655e532",
+      "optimizedUrl": "/scrAppaltezza/invitations/bodmys/couple_names/jardin-luz-natural-v1-web-v1.webp"
+    },
+    {
+      "root": "storage",
+      "original": "bodmys/gift_envelopes/sobre-botanico-v1.png",
+      "url": "/scrAppaltezza/invitations/bodmys/gift_envelopes/sobre-botanico-v1.png",
+      "originalBytes": 2073407,
+      "originalSha256": "d81a831c1738dfffdd443a6f28e4f17c804f4016c483da1af86fa037219baa75",
+      "optimized": "bodmys/gift_envelopes/sobre-botanico-v1-web-v1.webp",
+      "alphaUnchanged": true,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "profile": "webp-q90",
+      "optimizedBytes": 168604,
+      "optimizedSha256": "2bc7b55a198190c6ae3d517b6d6bc04e664abd5de52c00b6466b2b50aa981e1a",
+      "optimizedUrl": "/scrAppaltezza/invitations/bodmys/gift_envelopes/sobre-botanico-v1-web-v1.webp"
+    },
+    {
+      "root": "storage",
+      "original": "bodmys/dresscode/grupo-vestidos-acuarela-v1.png",
+      "url": "/scrAppaltezza/invitations/bodmys/dresscode/grupo-vestidos-acuarela-v1.png",
+      "originalBytes": 2486855,
+      "originalSha256": "48ba65085ef0ac6b8056ada113cd75bee5c33c855aa229fb5ac9918c4ece09ae",
+      "optimized": "bodmys/dresscode/grupo-vestidos-acuarela-v1-web-v1.webp",
+      "alphaUnchanged": true,
+      "dimensions": [
+        1596,
+        985
+      ],
+      "profile": "webp-q90",
+      "optimizedBytes": 502126,
+      "optimizedSha256": "5786c7f7f20aff3ebe93d82342668e3cc516de9c752bc9c83907c6788867705a",
+      "optimizedUrl": "/scrAppaltezza/invitations/bodmys/dresscode/grupo-vestidos-acuarela-v1-web-v1.webp"
+    },
+    {
+      "root": "storage",
+      "original": "bodmys/dresscode/paleta-telas-referencia-v1.png",
+      "url": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1.png",
+      "originalBytes": 2375147,
+      "originalSha256": "6c8f64f1d1ff754670469c133a65d1c7df023bd3bd747939222385c1365f7f1c",
+      "optimized": "bodmys/dresscode/paleta-telas-referencia-v1-web-v1.webp",
+      "dimensions": [
+        1476,
+        911
+      ],
+      "profile": "webp-q90",
+      "optimizedBytes": 150798,
+      "optimizedSha256": "6759b64177fd6af357e720f9603501c3797b0e4c175cf03586a23a744dca9e4e",
+      "optimizedUrl": "/scrAppaltezza/invitations/bodmys/dresscode/paleta-telas-referencia-v1-web-v1.webp"
+    },
+    {
+      "root": "storage",
+      "original": "bodmys/dresscode/tela-marfil-v1.webp",
+      "url": "/scrAppaltezza/invitations/bodmys/dresscode/tela-marfil-v1.webp",
+      "originalBytes": 72288,
+      "originalSha256": "2a3c4381e10cf46b0730ce56c177696d2347dc64c6960c9c637be38fbf07791b",
+      "optimized": "bodmys/dresscode/tela-marfil-v1.webp",
+      "profile": "keep-existing",
+      "optimizedBytes": 72288,
+      "optimizedSha256": "2a3c4381e10cf46b0730ce56c177696d2347dc64c6960c9c637be38fbf07791b",
+      "optimizedUrl": "/scrAppaltezza/invitations/bodmys/dresscode/tela-marfil-v1.webp"
+    },
+    {
+      "root": "storage",
+      "original": "bodmys/dresscode/tela-beige-v1.webp",
+      "url": "/scrAppaltezza/invitations/bodmys/dresscode/tela-beige-v1.webp",
+      "originalBytes": 39450,
+      "originalSha256": "e8dfff60c1b8e41f76db7d9a5466b81e5965d0e6052954376f49e77db7ac5311",
+      "optimized": "bodmys/dresscode/tela-beige-v1.webp",
+      "profile": "keep-existing",
+      "optimizedBytes": 39450,
+      "optimizedSha256": "e8dfff60c1b8e41f76db7d9a5466b81e5965d0e6052954376f49e77db7ac5311",
+      "optimizedUrl": "/scrAppaltezza/invitations/bodmys/dresscode/tela-beige-v1.webp"
+    },
+    {
+      "root": "storage",
+      "original": "bodmys/photos/003.jpeg",
+      "url": "/scrAppaltezza/invitations/bodmys/photos/003.jpeg",
+      "originalBytes": 27561,
+      "originalSha256": "95b06b533846dd616951ab7eb7c95a34e9ef68e128cf1e5d227cb51eee3829c4",
+      "optimized": "bodmys/photos/003.jpeg",
+      "profile": "keep-existing",
+      "optimizedBytes": 27561,
+      "optimizedSha256": "95b06b533846dd616951ab7eb7c95a34e9ef68e128cf1e5d227cb51eee3829c4",
+      "optimizedUrl": "/scrAppaltezza/invitations/bodmys/photos/003.jpeg"
+    },
+    {
+      "root": "storage",
+      "original": "bodmys/photos/004.jpeg",
+      "url": "/scrAppaltezza/invitations/bodmys/photos/004.jpeg",
+      "originalBytes": 53574,
+      "originalSha256": "674b50b84d1116f4da5825157771fdea6bc357c2c32d5713ae125b24994dcb63",
+      "optimized": "bodmys/photos/004.jpeg",
+      "profile": "keep-existing",
+      "optimizedBytes": 53574,
+      "optimizedSha256": "674b50b84d1116f4da5825157771fdea6bc357c2c32d5713ae125b24994dcb63",
+      "optimizedUrl": "/scrAppaltezza/invitations/bodmys/photos/004.jpeg"
+    },
+    {
+      "root": "storage",
+      "original": "bodmys/instant_photos/sello-lacre-MS-v1.webp",
+      "url": "/scrAppaltezza/invitations/bodmys/instant_photos/sello-lacre-MS-v1.webp",
+      "originalBytes": 47922,
+      "originalSha256": "6e54dfa14e29772c0c8598c699cfb9c016254d251605398b07e4f8862ab079f6",
+      "optimized": "bodmys/instant_photos/sello-lacre-MS-v1.webp",
+      "profile": "keep-existing",
+      "optimizedBytes": 47922,
+      "optimizedSha256": "6e54dfa14e29772c0c8598c699cfb9c016254d251605398b07e4f8862ab079f6",
+      "optimizedUrl": "/scrAppaltezza/invitations/bodmys/instant_photos/sello-lacre-MS-v1.webp"
+    },
+    {
+      "root": "storage",
+      "original": "bodmys/audio/ELENA ROSE & Rawayana - Luna de Miel - ELENA ROSE.mp3",
+      "url": "/scrAppaltezza/invitations/bodmys/audio/ELENA%20ROSE%20%26%20Rawayana%20-%20Luna%20de%20Miel%20-%20ELENA%20ROSE.mp3",
+      "originalBytes": 8633394,
+      "originalSha256": "25019c7727816542e5c0ad940b56a9411c9758a8b765c688358271cb4a6f3cbd",
+      "optimized": "bodmys/audio/ELENA ROSE & Rawayana - Luna de Miel - ELENA ROSE-web-v1.mp3",
+      "profile": "mp3-160kbps",
+      "optimizedBytes": 4317644,
+      "optimizedSha256": "7cacf572c43dea9ca08ff49aa460e5da5b4d5beae26777712f99cfc81ad52b16",
+      "optimizedUrl": "/scrAppaltezza/invitations/bodmys/audio/ELENA%20ROSE%20%26%20Rawayana%20-%20Luna%20de%20Miel%20-%20ELENA%20ROSE-web-v1.mp3"
+    },
+    {
+      "root": "frontend",
+      "original": "components/invitaciones-publicas/templates/wedding-oliva/assets/images/sello-lacre-abrir-v1.png",
+      "originalBytes": 2204604,
+      "originalSha256": "a9f96cbb2b2dff4d5584457f74da79d3c25c9ba343c5283f4a617892f0c86e13",
+      "optimized": "components/invitaciones-publicas/templates/wedding-oliva/assets/images/sello-lacre-abrir-v1-web-v1.webp",
+      "alphaUnchanged": true,
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "profile": "webp-q90",
+      "optimizedBytes": 396838,
+      "optimizedSha256": "e6d2c9aff9f7a7bbdd7b8f03d20db7ac73a3a0dd56745cdf88adc53f046d21eb"
+    },
+    {
+      "root": "frontend",
+      "original": "components/invitaciones-publicas/templates/wedding-oliva/assets/images/rsvp-flower-mask-v1.png",
+      "originalBytes": 598255,
+      "originalSha256": "111e830de0f35086a05b58458c7c8f62ce43634f96c0324a58b8f878858e6009",
+      "optimized": "components/invitaciones-publicas/templates/wedding-oliva/assets/images/rsvp-flower-mask-v1-web-v1.webp",
+      "alphaUnchanged": true,
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "profile": "webp-lossless",
+      "optimizedBytes": 337742,
+      "optimizedSha256": "a33325dfdcae4d5712ad9b9e4265c2d9028f9f54885d37c3619390eb36d5dd29"
+    },
+    {
+      "root": "frontend",
+      "original": "components/invitaciones-publicas/templates/wedding-oliva/assets/images/quote-floral-corner-mask-v1.png",
+      "originalBytes": 525549,
+      "originalSha256": "731bff769995bb439d4cbae17390055ec9c97be57dc4428d77ec91d14eeebad9",
+      "optimized": "components/invitaciones-publicas/templates/wedding-oliva/assets/images/quote-floral-corner-mask-v1-web-v1.webp",
+      "alphaUnchanged": true,
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "profile": "webp-lossless",
+      "optimizedBytes": 296630,
+      "optimizedSha256": "5c07399989394578471224dd6c0669358ed7286c751cfe26fcbf109ccb9ce452"
+    },
+    {
+      "root": "frontend",
+      "original": "components/invitaciones-publicas/templates/wedding-oliva/assets/images/cotton-paper-v1.png",
+      "originalBytes": 2279600,
+      "originalSha256": "cd0d4ececef781d46a61835dcbd327235ccc1a23d86f58072868b018e69d74c4",
+      "optimized": "components/invitaciones-publicas/templates/wedding-oliva/assets/images/cotton-paper-v1-web-v1.webp",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "profile": "webp-q90",
+      "optimizedBytes": 217466,
+      "optimizedSha256": "5be97a991b2866c63e601aed38084517d4872cb69d0745b322a18b897b99410f"
+    }
+  ]
+}
