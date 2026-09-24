@@ -302,7 +302,7 @@ INSERT INTO evento_invitacion_publica (
       )
     ),
     JSON_OBJECT(
-      'type', 'image_slider_sepia',
+      'type', 'image_slider_1',
       'enabled', true,
       'order', 10,
       'config', JSON_OBJECT(
