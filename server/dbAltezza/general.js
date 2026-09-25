@@ -2,6 +2,7 @@ const pool = require('./connection.js');
 const { isConfirmationClosed, validateAttendanceResponses } = require('../utils/invitationAttendance');
 const { resolveInvitationLocations } = require('../utils/invitationLocations');
 const { buildDefaultInvitationModules } = require('../utils/invitationModuleDefaults');
+const { normalizeInvitationModuleType } = require('../utils/invitationModuleType');
 
 let csmDB = {};
 const CLIENT_MODULE_CATALOG = [
@@ -32,12 +33,13 @@ const INVITATION_MODULE_TYPE_CATALOG = new Set([
   'parallax_image_date',
   'dresscode',
   'gift_envelopes',
+  'recommendations',
   'adults_only_notice',
   'closing_message',
   'welcome_message',
   'photo_slider',
   'instant_photos',
-  'image_slider_sepia',
+  'image_slider_1',
   'music_player',
   'countdown',
   'couple_family',
@@ -100,6 +102,7 @@ function normalizeInvitationModules(modules, evento = {}) {
   if (!Array.isArray(modules) || !modules.length) return fallback;
 
   const normalized = modules
+    .map(item => ({ ...item, type: normalizeInvitationModuleType(item?.type) }))
     .filter((item) => INVITATION_MODULE_TYPE_CATALOG.has(item?.type))
     .map((item, index) => ({
       type: item.type,

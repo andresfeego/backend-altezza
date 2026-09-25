@@ -150,6 +150,8 @@ function buildDefaultInvitationModules(evento = {}) {
         message: '',
         frameImage: null,
         frameImageAlt: 'Marco ornamental',
+        imageSrc: '',
+        imageAlt: '',
       },
     },
     {

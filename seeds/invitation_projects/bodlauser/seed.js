@@ -30,12 +30,12 @@ async function seed() {
       return insert.insertId;
     }
     const ceremony = await getPlace('Capilla Señora del Rosario del Pantano de Vargas');
-    const reception = await getPlace('Villa Germana');
+    const reception = await getPlace('Villa Germana Paipa');
     await db.query(`INSERT INTO evento
       (id, nombre, idTipoEvento, fechaHoraCeremonia, fechaHoraRecepcion, fechaHoraLimiteConfirmar, idLugarCeremonia, idLugarRecepcion, estado)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
       ON DUPLICATE KEY UPDATE id=VALUES(id)`,
-      [eventId, 'Laura & Sergio', types[0].id, '2026-12-19 14:30:00', '2026-12-19 16:00:00', null, ceremony, reception]);
+      [eventId, 'Laura & Sergio', types[0].id, '2026-12-19 14:30:00', '2026-12-19 16:30:00', null, ceremony, reception]);
     const modules = JSON.parse(fs.readFileSync(path.join(__dirname, 'modules.json'), 'utf8'));
     await db.query(`INSERT INTO evento_invitacion_publica (idEvento, templateKey, seoTitle, seoDescription, seoImage, published, modulesJson)
       VALUES (?, 'wedding_lemoncello', ?, ?, ?, 0, ?)
