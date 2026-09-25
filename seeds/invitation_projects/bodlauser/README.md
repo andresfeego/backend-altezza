@@ -2,7 +2,8 @@
 
 Ejecutar desde backend-altezza: `node seeds/invitation_projects/bodlauser/seed.js`.
 Crea bodlauser, wedding_lemoncello y diez módulos: Sobre → Hero → Frase bíblica → Image Slider 1 → Cuenta regresiva → Calendario → Detalles del evento → Lluvia de sobres → Recomendaciones → Vestuario.
-Incluye lausprueba con TEST GUEST TO REPLACE para revisar el enlace real.
+Incluye lausprueba con TEST GUEST TO REPLACE como principal y tres acompañantes
+ficticios (Invitado de prueba 2, 3 y 4) para revisar el enlace real y el scroll de asistencia.
 Solo base local, transacción y comprobación de identidad y propiedad. Al repetir,
 no sobrescribe contenido existente ni respuestas. No envía mensajes.
 
@@ -39,6 +40,26 @@ como alias de este corrector. El letrero de sombrillas presenta únicamente el
 contrato de frase bíblica: no incluye invitado ni mensaje personalizado.
 
 ## Fotografías
+
+### Portada para compartir y lista de eventos
+
+El Hero se capturó con Playwright el 25/09/2026, con el monograma y la fecha
+completos, sin música ni flechas visibles. La portada vigente es un recorte
+cuadrado de todo el ancho del Hero, centrado en la zona del monograma, sin
+relleno lateral. Se capturó a 480 × 840 CSS px con densidad 2.5 y recorte de
+480 × 480 CSS px, para obtener un JPEG de 1200 × 1200:
+`invitations/bodlauser/cover/laura-sergio-hero-share-square-v2.jpg`.
+Su copia idéntica para el administrador está en
+`images/eventos/bodlauser/datos_evento/laura-sergio-hero-share-square-v2.jpg`.
+La captura vertical inicial de 480 × 840 y la composición horizontal anterior
+se conservan como referencia, pero ya no son las portadas configuradas.
+
+`node seeds/invitation_projects/bodlauser/configure-share-image.js` configura
+`seoImage` e `imagenPrincipal` en la base local. Valida identidad, dimensiones,
+copias idénticas y preservación del resto de los datos; guarda respaldo y es
+idempotente. No altera módulos, fechas, invitados ni publicación. Estos archivos
+son propios del evento y deben acompañar la configuración al subir el Storage;
+no se incluyen entre los recursos versionados de la plantilla.
 
 `organize-photos.js` organizó los 22 JPEG originales como `photos/001.jpeg` a
 `photos/022.jpeg`, eliminó los siete ZIP y retiró las carpetas que quedaron vacías.
