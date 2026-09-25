@@ -43,9 +43,12 @@ contrato de frase bíblica: no incluye invitado ni mensaje personalizado.
 `organize-photos.js` organizó los 22 JPEG originales como `photos/001.jpeg` a
 `photos/022.jpeg`, eliminó los siete ZIP y retiró las carpetas que quedaron vacías.
 `photos-manifest.json`, junto a esa carpeta, conserva rutas originales, SHA-256
-y la selección aleatoria de siete fotos distintas; ninguna foto original se convirtió.
+y la selección de fotos; ninguna foto original se convirtió. El 24/09/2026 se
+añadieron las cuatro fotos recibidas como `023.jpeg` a `026.jpeg`, conservando
+los bytes originales y su procedencia en el manifiesto. Hay 26 JPEG en `photos/`.
 
-Las fotos seleccionadas son 017, 005, 012, 004, 011, 015 y 006. El seed guarda sus
+Las once fotos del slider son 017, 023, 005, 012, 024, 004, 011, 025, 015, 006 y 026:
+las cuatro nuevas se intercalan sin alterar el orden de las siete anteriores. El seed guarda sus
 copias WebP en `/scrAppaltezza/invitations/bodlauser/image_slider_1/`.
 `node seeds/invitation_projects/bodlauser/prepare-photo-slider.js` reproduce esas
 copias optimizadas. `configure-photos.js` agrega el módulo después de la frase bíblica
@@ -57,16 +60,21 @@ y URLs antiguas no se renombran: así se conservan fotos, recortes y configuraci
 Lecturas y escrituras del backend aceptan el alias antiguo y devuelven el nombre nuevo.
 
 Word: ceremonia 19/12/2026 14:30 America/Bogota, Paipa, Capilla Señora del Rosario
-del Pantano de Vargas; recepción Villa Germana. Frase: Celebramos nuestro amor y
+del Pantano de Vargas; recepción Villa Germana Paipa, a las 16:30 del mismo día,
+confirmada el 24/09/2026. Frase: Celebramos nuestro amor y
 queremos compartirlo con nuestras personas favoritas.
 
 Pendientes:
 - TEST INVITATION TO REPLACE y TEST GUEST TO REPLACE son datos ficticios de prueba.
-- RECEPTION TIME TO REPLACE: 16:00 del mismo día es provisional porque la columna
-  fechaHoraRecepcion no admite NULL; ahora se muestra en detalles junto al mensaje
-  inglés «RECEPTION TIME TO REPLACE» para identificarlo como provisional.
-- Fecha límite NULL. Capilla sin coordenadas; Villa Germana reutiliza su registro
-  existente, incluidas las coordenadas que ya tuviera.
+- Fecha límite NULL. La capilla usa el enlace entregado por el usuario:
+  https://maps.app.goo.gl/ULysqgZLGN33vxTv9?g_st=ic.
+
+`node seeds/invitation_projects/bodlauser/configure-confirmed-details.js` aplica
+las 16:30, el nombre Villa Germana Paipa, el enlace de la capilla y elimina
+`RECEPTION TIME TO REPLACE`. Guarda respaldo y usa transacción local; conserva
+los otros módulos y no renombra el lugar Villa Germana compartido por otra boda.
+El lugar específico de esta tarjeta conserva las coordenadas de ese registro.
+Pruebas de preservación e idempotencia: `tests/lemoncello-confirmed-details.test.js`.
 
 Los recursos del sobre y la animación pertenecen a la plantilla frontend.
 El Hero tiene dos planos de acuarela independientes y monograma recoloreable;
