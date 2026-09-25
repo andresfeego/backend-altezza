@@ -3,7 +3,7 @@ const path = require('node:path');
 const os = require('node:os');
 
 function configurePhotos(modules, config) {
-  if (!Array.isArray(config?.images) || config.images.length !== 7 || new Set(config.images).size !== 7) throw new Error('Se requieren siete fotos distintas.');
+  if (!Array.isArray(config?.images) || !config.images.length || config.images.some(image => typeof image !== 'string' || !image.trim()) || new Set(config.images).size !== config.images.length) throw new Error('Se requieren fotos distintas con rutas válidas.');
   const sorted = [...modules].sort((a, b) => a.order - b.order);
   const existing = sorted.filter(module => module.type === 'image_slider_1');
   if (existing.length > 1) throw new Error('Slider duplicado.');
