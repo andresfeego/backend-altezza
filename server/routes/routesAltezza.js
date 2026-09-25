@@ -1,6 +1,7 @@
 const express = require('express');
 const general = require('../dbAltezza/general');
 const usuario = require('../dbAltezza/usuario');
+const { publicEventImageUrl } = require('../utils/publicEventImageUrl');
 
 
 const fs = require('fs');
@@ -23,18 +24,15 @@ const isLocal = process.env.NODE_ENV !== 'production';
 const DATA_ROOT = process.env.ALTEZZA_DATA_ROOT || path.resolve(__dirname, '../../data/altezza');
 const BASE_DIR = process.env.ALTEZZA_EVENTOS_DIR || path.join(DATA_ROOT, 'images/eventos');
 
-// Public base (same-origin behind nginx).
-const BASE_URL_IMAGENES = (process.env.PUBLIC_BASE_URL || '').replace(/\/$/, '') || '';
-
 // Public path for event images (served by express in local dev, and by nginx alias in VPS)
 const EVENTOS_PUBLIC_PATH = (process.env.ALTEZZA_EVENTOS_PUBLIC_PATH || '/scrAppaltezza/images/eventos').replace(/\/$/, '');
 
 function publicEventoUrl(rutaRelativa) {
-  const rel = String(rutaRelativa || '');
-  if (!rel) return rel;
-  const base = (BASE_URL_IMAGENES || '').replace(/\/$/, '');
-  const tail = rel.startsWith('/') ? rel : `/${rel}`;
-  return `${base}${EVENTOS_PUBLIC_PATH}${tail}`;
+  return publicEventImageUrl(rutaRelativa, {
+    eventPath: EVENTOS_PUBLIC_PATH,
+    invitationPath: process.env.ALTEZZA_INVITATIONS_PUBLIC_PATH || '/scrAppaltezza/invitations',
+    templatePath: process.env.ALTEZZA_TEMPLATES_PUBLIC_PATH || '/scrAppaltezza/templates',
+  });
 }
 
 

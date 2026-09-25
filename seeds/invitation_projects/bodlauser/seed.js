@@ -1,6 +1,7 @@
 /** Local-only, repeatable data provisioning; no schema changes. */
 const path = require('node:path');
 const fs = require('node:fs');
+const { SEO_IMAGE, EVENT_IMAGE } = require('./configure-share-image');
 require('dotenv').config({ path: path.resolve(__dirname, '../../../.env'), quiet: true });
 const mysql = require('mysql2/promise');
 
@@ -32,15 +33,15 @@ async function seed() {
     const ceremony = await getPlace('Capilla Señora del Rosario del Pantano de Vargas');
     const reception = await getPlace('Villa Germana Paipa');
     await db.query(`INSERT INTO evento
-      (id, nombre, idTipoEvento, fechaHoraCeremonia, fechaHoraRecepcion, fechaHoraLimiteConfirmar, idLugarCeremonia, idLugarRecepcion, estado)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
+      (id, nombre, idTipoEvento, fechaHoraCeremonia, fechaHoraRecepcion, fechaHoraLimiteConfirmar, idLugarCeremonia, idLugarRecepcion, imagenPrincipal, estado)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
       ON DUPLICATE KEY UPDATE id=VALUES(id)`,
-      [eventId, 'Laura & Sergio', types[0].id, '2026-12-19 14:30:00', '2026-12-19 16:30:00', null, ceremony, reception]);
+      [eventId, 'Laura & Sergio', types[0].id, '2026-12-19 14:30:00', '2026-12-19 16:30:00', null, ceremony, reception, EVENT_IMAGE]);
     const modules = JSON.parse(fs.readFileSync(path.join(__dirname, 'modules.json'), 'utf8'));
     await db.query(`INSERT INTO evento_invitacion_publica (idEvento, templateKey, seoTitle, seoDescription, seoImage, published, modulesJson)
       VALUES (?, 'wedding_lemoncello', ?, ?, ?, 0, ?)
       ON DUPLICATE KEY UPDATE idEvento=VALUES(idEvento)`,
-      [eventId, 'Laura y Sergio | Nuestra boda', '19 de diciembre de 2026 · Paipa.', '', JSON.stringify(modules)]);
+      [eventId, 'Laura y Sergio | Nuestra boda', '19 de diciembre de 2026 · Paipa.', SEO_IMAGE, JSON.stringify(modules)]);
     const [priorInvitation] = await db.query('SELECT id FROM invitacion WHERE id = ?', [invitationId]);
     if (priorInvitation.length) {
       const [owners] = await db.query('SELECT idEvento FROM evento_has_invitacion WHERE idInvitacion = ?', [invitationId]);
@@ -53,7 +54,12 @@ async function seed() {
     if (!country.length) throw new Error('Falta Colombia en pais_telefono.');
     const [members] = await db.query('SELECT i.id, i.nombre FROM invitado i JOIN invitacion_has_invitado h ON h.idInvitado=i.id WHERE h.idInvitacion=?', [invitationId]);
     const guestIds = [];
-    for (const [index, name] of ['TEST GUEST TO REPLACE'].entries()) {
+    for (const [index, name] of [
+      'TEST GUEST TO REPLACE',
+      'Invitado de prueba 2',
+      'Invitado de prueba 3',
+      'Invitado de prueba 4',
+    ].entries()) {
       let id = members.find((guest) => guest.nombre === name)?.id;
       if (!id) {
         const [insert] = await db.query('INSERT INTO invitado (nombre, principal, confirmado, telefono, idPaisTelefono, wp) VALUES (?, ?, 0, ?, ?, 0)', [name, index === 0 ? 1 : 0, '', country[0].id]);
