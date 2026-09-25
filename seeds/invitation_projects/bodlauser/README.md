@@ -132,8 +132,10 @@ del WhatsApp; se usa el destino oficial de WhatsApp sin enviar mensajes.
 
 `node seeds/invitation_projects/bodlauser/configure-dresscode.js` añade el módulo
 compartido `dresscode` después de recomendaciones. Textos de elegancia fresca,
-seis figuras sin novia y paleta de seis telas sugeridas; amarillo mantequilla y
-azul cielo reservados. Imagen y atlas viven en el frontend. No cambia invitados,
+seis figuras sin novia: mujeres con vestidos pastel y hombres con trajes de paño
+gris, gris oscuro y negro (`dresscode-guests-formal-v2.webp`). Sin título ni paleta
+de tonos sugeridos; amarillo mantequilla, azul cielo y blanco reservados.
+Imagen y atlas viven en el frontend. No cambia invitados,
 respuestas, horarios ni publicación. Local, transaccional, con respaldo e
 idempotente; pruebas en `tests/lemoncello-dresscode.test.js`.
 
